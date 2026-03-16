@@ -53,12 +53,17 @@ export function useModelDetector() {
         const data = await resp.json()
         const raw = data.data || data.models || []
         models = raw
-          .map(m => ({
-            id: m.id || m.name,
-            name: m.id || m.name,
-            group: guessGroup(m.id || m.name),
-          }))
-          .sort((a, b) => a.group.localeCompare(b.group) || a.name.localeCompare(b.name))
+          .map(m => {
+            const id = m.id || m.name
+            const group = guessGroup(id)
+            return {
+              id,
+              name: id,
+              displayName: toDisplayName(id, group),
+              group,
+            }
+          })
+          .sort((a, b) => a.group.localeCompare(b.group) || a.displayName.localeCompare(b.displayName))
       }
 
       return models
@@ -76,6 +81,26 @@ export function useModelDetector() {
   }
 
   return { detect, detecting, error }
+}
+
+// ===== 辅助：生成友好显示名 =====
+function toDisplayName(id = '', group = '') {
+  // 去掉已知前缀，保留有意义的部分
+  const prefixes = [
+    'claude-', 'gemini-', 'gpt-', 'deepseek-', 'grok-',
+    'mistral-', 'mixtral-', 'llama-', 'meta-llama/', 'qwen-',
+    'glm-', 'kimi-', 'moonshot-', 'yi-',
+  ]
+  let name = id
+  for (const p of prefixes) {
+    if (name.toLowerCase().startsWith(p)) {
+      name = name.slice(p.length)
+      break
+    }
+  }
+  // 首字母大写，替换连字符为空格
+  name = name.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+  return name || id
 }
 
 // ===== 辅助：按模型名猜分组 =====
@@ -100,10 +125,10 @@ function guessGroup(id = '') {
 
 // Anthropic 硬编码（官方无公开 /models 端点）
 const ANTHROPIC_MODELS = [
-  { id: 'claude-opus-4-5',           name: 'Claude Opus 4.5',    group: 'Anthropic' },
-  { id: 'claude-sonnet-4-5',         name: 'Claude Sonnet 4.5 ★', group: 'Anthropic' },
-  { id: 'claude-haiku-4-5',          name: 'Claude Haiku 4.5',   group: 'Anthropic' },
-  { id: 'claude-3-5-sonnet-20241022',name: 'Claude 3.5 Sonnet',  group: 'Anthropic' },
-  { id: 'claude-3-5-haiku-20241022', name: 'Claude 3.5 Haiku',   group: 'Anthropic' },
-  { id: 'claude-3-opus-20240229',    name: 'Claude 3 Opus',      group: 'Anthropic' },
+  { id: 'claude-opus-4-5',           name: 'claude-opus-4-5',           displayName: 'Opus 4.5',      group: 'Anthropic' },
+  { id: 'claude-sonnet-4-5',         name: 'claude-sonnet-4-5',         displayName: 'Sonnet 4.5 ★',  group: 'Anthropic' },
+  { id: 'claude-haiku-4-5',          name: 'claude-haiku-4-5',          displayName: 'Haiku 4.5',     group: 'Anthropic' },
+  { id: 'claude-3-5-sonnet-20241022',name: 'claude-3-5-sonnet-20241022',displayName: '3.5 Sonnet',    group: 'Anthropic' },
+  { id: 'claude-3-5-haiku-20241022', name: 'claude-3-5-haiku-20241022', displayName: '3.5 Haiku',     group: 'Anthropic' },
+  { id: 'claude-3-opus-20240229',    name: 'claude-3-opus-20240229',    displayName: '3 Opus',        group: 'Anthropic' },
 ]

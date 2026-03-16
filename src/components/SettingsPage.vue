@@ -134,7 +134,7 @@
                 :class="{ selected: settings.defaultModel === m.id }"
                 @click="settings.defaultModel = m.id"
               >
-                {{ m.name }}
+                {{ m.displayName || m.name }}
               </div>
             </div>
           </div>

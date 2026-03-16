@@ -35,11 +35,9 @@
         @change="$emit('update:selectedModel', $event.target.value)"
         class="model-select"
       >
-        <option value="" disabled>— 选择模型 —</option>
-        <template v-for="[gName, group] in groupedEntries" :key="gName">
-          <option disabled style="font-weight:600;color:#888">── {{ gName }} ──</option>
-          <option v-for="m in group" :key="m.id" :value="m.id">{{ m.name }}</option>
-        </template>
+        <optgroup v-for="[gName, group] in groupedEntries" :key="gName" :label="gName">
+          <option v-for="m in group" :key="m.id" :value="m.id">{{ m.displayName }}</option>
+        </optgroup>
       </select>
       <!-- 没有检测：手动输入 -->
       <input
