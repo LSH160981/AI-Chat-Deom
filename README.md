@@ -158,31 +158,48 @@ npm run build
 
 ```
 src/
+├── main.js                          # 应用入口，注册插件和全局组件
+├── App.vue                          # 根组件（主题/字体/全局弹窗）
+│
+├── views/                           # 页面级组件（路由直接挂载）
+│   ├── ChatPage.vue                 # 主聊天页（多模式协调）
+│   └── SettingsPage.vue             # 设置页
+│
 ├── components/
-│   ├── AIChat.vue              # 主入口（逻辑编排）
-│   ├── AppSidebar.vue          # 侧边栏
-│   ├── AppModal.vue            # 自定义弹窗
-│   ├── SettingsPage.vue        # 设置页
-│   └── views/
-│       ├── ChatView.vue        # AI 对话界面
-│       ├── ImageGenView.vue    # 文生图界面
-│       ├── SpeechToTextView.vue# 语音转文字
-│       └── TextToSpeechView.vue# 文字转语音
-├── composables/
-│   ├── useApiClient.js         # API 请求（流式/图片/TTS/STT）
-│   ├── useModelDetector.js     # 自动检测可用模型
-│   ├── useMarkdown.js          # Markdown + 代码高亮 + KaTeX
-│   ├── useRecorder.js          # 录音逻辑
-│   └── useModal.js             # 全局弹窗
-├── stores/
-│   └── settings.js             # 设置持久化（localStorage）
-├── config/
-│   └── models.js               # CHAT_MODES 等配置
-├── i18n/
+│   ├── common/                      # 通用基础组件
+│   │   ├── AppIcon.vue              # SVG 图标（25+ 图标统一管理）
+│   │   └── AppModal.vue             # 全局弹窗（替代 alert/confirm）
+│   ├── layout/                      # 布局组件
+│   │   └── AppSidebar.vue           # 侧边栏
+│   └── chat/                        # 业务组件（各功能模式）
+│       ├── ChatView.vue             # AI 对话界面
+│       ├── ImageGenView.vue         # 文生图界面
+│       ├── SpeechToTextView.vue     # 语音转文字
+│       └── TextToSpeechView.vue     # 文字转语音
+│
+├── composables/                     # 逻辑复用（Composition API Hooks）
+│   ├── useApiClient.js              # API 请求（流式/图片/TTS/STT）
+│   ├── useModelDetector.js          # 自动检测可用模型
+│   ├── useMarkdown.js               # Markdown + 代码高亮 + KaTeX
+│   ├── useModal.js                  # 全局弹窗控制
+│   ├── useRecorder.js               # 录音逻辑
+│   └── usePuter.js                  # Puter SDK（备用）
+│
+├── stores/                          # 状态管理（localStorage 持久化）
+│   └── settings.js
+│
+├── router/                          # 路由配置
+│   └── index.js
+│
+├── i18n/                            # 国际化
 │   ├── index.js
-│   └── locales/                # zh / en / ja / ko / ru
-└── styles/
-    └── app.css                 # 全局样式（CSS 变量）
+│   └── locales/                     # zh / en / ja / ko / ru
+│
+├── constants/                       # 常量与静态配置
+│   └── models.js                    # 模式列表、图标配置
+│
+└── styles/                          # 全局样式
+    └── app.css                      # CSS 变量、主题、滚动条等
 ```
 
 ---

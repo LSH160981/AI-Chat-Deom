@@ -114,15 +114,15 @@
 
 <script setup>
 import { ref, computed } from 'vue'
-import AppSidebar from './AppSidebar.vue'
-import ChatView from './views/ChatView.vue'
-import ImageGenView from './views/ImageGenView.vue'
-import SpeechToTextView from './views/SpeechToTextView.vue'
-import TextToSpeechView from './views/TextToSpeechView.vue'
+import AppSidebar from '@/components/layout/AppSidebar.vue'
+import ChatView from '@/components/chat/ChatView.vue'
+import ImageGenView from '@/components/chat/ImageGenView.vue'
+import SpeechToTextView from '@/components/chat/SpeechToTextView.vue'
+import TextToSpeechView from '@/components/chat/TextToSpeechView.vue'
 import { useRecorder } from '@/composables/useRecorder'
 import { useModal } from '@/composables/useModal'
 import { chatStream, generateImage as apiGenerateImage, transcribeAudio, synthesizeSpeech } from '@/composables/useApiClient'
-import { CHAT_MODES } from '@/config/models'
+import { CHAT_MODES } from '@/constants/models'
 import { settings } from '@/stores/settings'
 
 // 国际化翻译函数

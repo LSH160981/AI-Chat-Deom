@@ -33,7 +33,7 @@
  *  4. 监听系统深色模式变化，当 theme 为 'system' 时自动跟随
  */
 import { watch, onMounted } from 'vue'
-import AppModal from './components/AppModal.vue'
+import AppModal from './components/common/AppModal.vue'
 import { useModal } from './composables/useModal'
 import { settings } from './stores/settings'
 

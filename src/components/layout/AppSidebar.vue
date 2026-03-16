@@ -107,7 +107,7 @@
 <script setup>
 import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
-import { CHAT_MODES } from '@/config/models'
+import { CHAT_MODES } from '@/constants/models'
 import { settings } from '@/stores/settings'
 
 /**

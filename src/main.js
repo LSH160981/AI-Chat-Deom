@@ -13,7 +13,7 @@ import { createApp } from 'vue'
 import router from './router'           // Vue Router 路由实例
 import i18n from './i18n'               // vue-i18n 国际化实例（全局注入 $t / useI18n）
 import App from './App.vue'             // 根组件
-import AppIcon from './components/AppIcons.vue'  // 全局 SVG 图标组件
+import AppIcon from './components/common/AppIcon.vue'  // 全局 SVG 图标组件
 import './assets/main.css'              // 全局 CSS 样式
 
 /** 创建 Vue 应用实例 */
