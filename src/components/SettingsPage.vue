@@ -71,6 +71,44 @@
           <span>⚠️ {{ detectError }}</span>
         </div>
 
+        <!-- 测试连接 -->
+        <div class="setting-item">
+          <div class="setting-info">
+            <label>测试连接</label>
+            <p>验证 URL / Key / 模型是否可用</p>
+          </div>
+          <button
+            class="detect-btn"
+            :class="testStatus === 'ok' ? 'test-ok' : testStatus === 'fail' ? 'test-fail' : ''"
+            :disabled="testing || !settings.apiBaseUrl || !settings.defaultModel"
+            @click="runTest"
+          >
+            <span v-if="testing" class="detect-spin"></span>
+            <template v-else-if="testStatus === 'ok'">✅ 可用</template>
+            <template v-else-if="testStatus === 'fail'">❌ 失败</template>
+            <template v-else>🧪 测试</template>
+          </button>
+        </div>
+
+        <!-- 测试结果详情 -->
+        <div v-if="testResult" class="test-result" :class="testStatus">
+          <div class="test-result-row">
+            <span class="test-label">延迟</span>
+            <span class="test-value">{{ testResult.latency }}ms</span>
+          </div>
+          <div class="test-result-row">
+            <span class="test-label">模型</span>
+            <span class="test-value mono">{{ testResult.model }}</span>
+          </div>
+          <div class="test-result-row">
+            <span class="test-label">回复</span>
+            <span class="test-value">{{ testResult.reply }}</span>
+          </div>
+        </div>
+        <div v-if="testError" class="detect-error">
+          ⚠️ {{ testError }}
+        </div>
+
         <!-- 模型列表（分组折叠展示） -->
         <div v-if="settings.detectedModels.length" class="model-list-preview">
           <div
@@ -302,6 +340,42 @@ const { t, locale } = useI18n()
 const currentLocale = computed(() => locale.value)
 const { confirm } = useModal()
 const { detect, detecting, error: detectError } = useModelDetector()
+import { chatStream } from '@/composables/useApiClient'
+
+// 测试连接
+const testing = ref(false)
+const testStatus = ref('') // '' | 'ok' | 'fail'
+const testResult = ref(null)
+const testError = ref('')
+
+const runTest = async () => {
+  testing.value = true
+  testStatus.value = ''
+  testResult.value = null
+  testError.value = ''
+  const model = settings.defaultModel
+  const t0 = Date.now()
+  let reply = ''
+  try {
+    await chatStream({
+      messages: [{ role: 'user', content: 'Hi, reply with exactly one word: OK' }],
+      model,
+      temperature: 0,
+      onChunk: (c) => { reply += c },
+    })
+    testStatus.value = 'ok'
+    testResult.value = {
+      latency: Date.now() - t0,
+      model,
+      reply: reply.trim().slice(0, 80),
+    }
+  } catch (e) {
+    testStatus.value = 'fail'
+    testError.value = e.message || String(e)
+  } finally {
+    testing.value = false
+  }
+}
 
 // 设置页滚动解锁
 onMounted(() => {
@@ -481,4 +555,16 @@ const clearData = async () => {
 .about-links a:hover { text-decoration: underline; }
 
 .save-notice { display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 12px; color: var(--text-muted); margin-top: 8px; }
+
+.detect-btn.test-ok { border-color: #4ade80; color: #4ade80; }
+.detect-btn.test-fail { border-color: var(--danger); color: var(--danger); }
+
+.test-result { margin: 0 16px 12px; border-radius: 10px; overflow: hidden; border: 1px solid var(--border); font-size: 13px; }
+.test-result.ok { border-color: rgba(74,222,128,0.4); background: rgba(74,222,128,0.06); }
+.test-result.fail { border-color: rgba(248,113,113,0.4); background: rgba(248,113,113,0.06); }
+.test-result-row { display: flex; gap: 12px; padding: 8px 12px; border-bottom: 1px solid var(--border-subtle); align-items: baseline; }
+.test-result-row:last-child { border-bottom: none; }
+.test-label { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.4px; flex-shrink: 0; width: 36px; }
+.test-value { color: var(--text); word-break: break-all; }
+.mono { font-family: monospace; font-size: 12px; }
 </style>
