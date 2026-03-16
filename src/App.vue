@@ -24,17 +24,31 @@ import { settings } from './stores/settings'
 
 const { state: modalState, onConfirm: modalOnConfirm, onCancel: modalOnCancel } = useModal()
 
-// ===== 主题 =====
+// ===== 主题变量 =====
+const THEME_COLORS = {
+  light: '#ffffff',
+  dark: '#141414',
+}
+
 const applyTheme = (theme) => {
   const html = document.documentElement
   html.classList.remove('theme-light', 'theme-dark')
 
+  let isDark
   if (theme === 'system') {
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
-    html.classList.add(prefersDark ? 'theme-dark' : 'theme-light')
+    isDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+    html.classList.add(isDark ? 'theme-dark' : 'theme-light')
   } else {
+    isDark = theme === 'dark'
     html.classList.add(`theme-${theme}`)
   }
+
+  // 更新 iOS 状态栏颜色
+  const color = isDark ? THEME_COLORS.dark : THEME_COLORS.light
+  document.getElementById('meta-theme-color')?.setAttribute('content', color)
+  // apple-mobile-web-app-status-bar-style：深色用 black-translucent，浅色用 default
+  document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]')
+    ?.setAttribute('content', isDark ? 'black-translucent' : 'default')
 }
 
 // ===== 字体大小 =====
