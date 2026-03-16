@@ -298,7 +298,7 @@ Object.entries(langMap).forEach(([k, v]) => hljs.registerLanguage(k, v))
 
 const currentMode = ref('chat')
 const sidebarOpen = ref(false)
-const selectedModel = ref('claude-sonnet-4-6')
+const selectedModel = ref('claude-sonnet-4-5')
 const systemPrompt = ref('')
 const temperature = ref(0.7)
 const webSearchEnabled = ref(false)
