@@ -249,7 +249,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { settings, resetSettings } from '@/stores/settings'
 import { MODEL_LIST, IMAGE_MODEL_LIST, TTS_VOICE_MAP } from '@/config/models'
@@ -258,7 +258,17 @@ import { useModal } from '@/composables/useModal'
 
 const { t, locale } = useI18n()
 const currentLocale = computed(() => locale.value)
-const { confirm, alert } = useModal()
+const { confirm } = useModal()
+
+// 设置页需要可滚动，临时解除 body overflow: hidden
+onMounted(() => {
+  document.documentElement.style.overflow = 'auto'
+  document.body.style.overflow = 'auto'
+})
+onUnmounted(() => {
+  document.documentElement.style.overflow = 'hidden'
+  document.body.style.overflow = 'hidden'
+})
 
 const switchLang = (code) => {
   locale.value = code
@@ -303,7 +313,7 @@ const clearData = async () => {
 </script>
 
 <style scoped>
-.settings-page { min-height: 100vh; background: #f5f5f5; padding: 20px 16px 60px; }
+.settings-page { min-height: 100vh; background: #f5f5f5; padding: 20px 16px 60px; overflow-y: auto; }
 .settings-container { max-width: 640px; margin: 0 auto; }
 
 .settings-header { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
