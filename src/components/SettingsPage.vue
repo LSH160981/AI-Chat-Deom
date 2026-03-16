@@ -2,7 +2,7 @@
   <div class="settings-page">
     <div class="settings-container">
 
-      <!-- 页头 -->
+      <!-- 页头：返回按钮 / 标题 / 重置按钮 -->
       <div class="settings-header">
         <button class="back-btn" @click="$router.back()">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -11,41 +11,47 @@
           {{ $t('common.back') }}
         </button>
         <h1>{{ $t('settings.title') }}</h1>
+        <!-- 点击后弹出确认框，确认则重置所有设置 -->
         <button class="reset-btn" @click="confirmReset">{{ $t('common.reset') }}</button>
       </div>
 
-      <!-- API 连接 -->
+      <!-- ────────────── API 连接 ────────────── -->
       <section class="settings-section">
         <h2 class="section-title"><span class="section-icon">🔌</span> API 连接</h2>
 
-        <!-- 旧接口迁移提示 -->
+        <!-- 旧接口迁移提示横幅：仅当检测到旧接口地址时显示 -->
         <div v-if="isOldApi" class="migrate-banner">
           <span>⚠️ 检测到旧接口配置，建议切换到新接口</span>
           <button class="migrate-btn" @click="migrateToOpenRouter">一键切换到最新接口</button>
         </div>
 
+        <!-- Base URL 输入 -->
         <div class="setting-item col">
           <div class="setting-info">
             <label>Base URL</label>
             <p>服务商地址，会自动补全路径（如 /v1）</p>
           </div>
           <div class="url-row">
+            <!-- 失焦时触发 URL 规范化预览 -->
             <input
               v-model="settings.apiBaseUrl"
               class="s-input url-input"
               placeholder="https://api.openai.com"
               @blur="showNormalized"
             />
+            <!-- 当规范化后的 URL 与输入不同时，给出提示 -->
             <span v-if="normalizedUrl" class="url-hint">→ {{ normalizedUrl }}</span>
           </div>
         </div>
 
+        <!-- API Key 输入（支持明文/密文切换） -->
         <div class="setting-item col">
           <div class="setting-info">
             <label>API Key</label>
             <p>sk-... 或对应服务商的密钥</p>
           </div>
           <div class="key-row">
+            <!-- :type 根据 showKey 动态切换 password / text -->
             <input
               v-model="settings.apiKey"
               :type="showKey ? 'text' : 'password'"
@@ -53,36 +59,40 @@
               placeholder="sk-..."
               autocomplete="off"
             />
+            <!-- 眼睛按钮：切换密钥明文/密文显示 -->
             <button class="eye-btn" @click="showKey = !showKey">
               {{ showKey ? '🙈' : '👁️' }}
             </button>
           </div>
         </div>
 
-        <!-- 检测按钮 -->
+        <!-- 检测可用模型按钮 -->
         <div class="setting-item">
           <div class="setting-info">
             <label>可用模型</label>
+            <!-- 已检测时显示数量，否则显示引导文字 -->
             <p v-if="settings.detectedModels.length">已检测到 {{ settings.detectedModels.length }} 个模型</p>
             <p v-else>点击检测获取模型列表</p>
           </div>
+          <!-- detecting 为 true 时按钮禁用并显示加载动画 -->
           <button class="detect-btn" :disabled="detecting || !settings.apiBaseUrl" @click="runDetect">
             <span v-if="detecting" class="detect-spin"></span>
             {{ detecting ? '检测中…' : '🔍 检测' }}
           </button>
         </div>
 
-        <!-- 检测错误 -->
+        <!-- 模型检测错误信息 -->
         <div v-if="detectError" class="detect-error">
           <span>⚠️ </span><span v-text="cleanError(detectError)"></span>
         </div>
 
-        <!-- 测试连接 -->
+        <!-- 测试连接按钮（发一条极简消息验证 API 可用性） -->
         <div class="setting-item">
           <div class="setting-info">
             <label>测试连接</label>
             <p>验证 URL / Key / 模型是否可用</p>
           </div>
+          <!-- 按钮颜色根据测试结果动态变化：ok=绿，fail=红 -->
           <button
             class="detect-btn"
             :class="testStatus === 'ok' ? 'test-ok' : testStatus === 'fail' ? 'test-fail' : ''"
@@ -96,7 +106,7 @@
           </button>
         </div>
 
-        <!-- 测试结果详情 -->
+        <!-- 测试成功后的详细结果：延迟 / 模型 / 回复内容 -->
         <div v-if="testResult" class="test-result" :class="testStatus">
           <div class="test-result-row">
             <span class="test-label">延迟</span>
@@ -111,22 +121,27 @@
             <span class="test-value">{{ testResult.reply }}</span>
           </div>
         </div>
+        <!-- 测试失败错误信息 -->
         <div v-if="testError" class="detect-error">
           ⚠️ <span v-text="cleanError(testError)"></span>
         </div>
 
-        <!-- 模型列表（分组折叠展示） -->
+        <!-- 检测到的模型分组折叠列表 -->
         <div v-if="settings.detectedModels.length" class="model-list-preview">
           <div
             v-for="[gName, group] in groupedEntries"
             :key="gName"
             class="model-group"
           >
+            <!-- 分组标题行：点击展开/折叠 -->
             <div class="model-group-title" @click="toggleGroup(gName)">
               <span>{{ gName }} <em>({{ group.length }})</em></span>
+              <!-- 展开/折叠三角图标 -->
               <span class="chevron">{{ openGroups[gName] ? '▲' : '▼' }}</span>
             </div>
+            <!-- 分组内模型 chip 列表，展开时显示 -->
             <div v-if="openGroups[gName]" class="model-group-items">
+              <!-- 点击 chip 即选中该模型为默认模型，选中态高亮 -->
               <div
                 v-for="m in group"
                 :key="m.id"
@@ -141,10 +156,11 @@
         </div>
       </section>
 
-      <!-- 默认模型（检测前用手动输入） -->
+      <!-- ────────────── 对话设置 ────────────── -->
       <section class="settings-section">
         <h2 class="section-title"><span class="section-icon">💬</span> {{ $t('settings.sectionChat') }}</h2>
 
+        <!-- 默认模型：检测前手动输入，检测后可从上方列表点击选择 -->
         <div class="setting-item col">
           <div class="setting-info">
             <label>{{ $t('settings.defaultModel') }}</label>
@@ -153,6 +169,7 @@
           <input v-model="settings.defaultModel" class="s-input" placeholder="gpt-4o" />
         </div>
 
+        <!-- 系统提示词（System Prompt） -->
         <div class="setting-item col">
           <div class="setting-info">
             <label>{{ $t('settings.systemPrompt') }}</label>
@@ -161,14 +178,17 @@
           <textarea v-model="settings.systemPrompt" :placeholder="$t('settings.systemPromptPlaceholder')" class="s-textarea" rows="3"></textarea>
         </div>
 
+        <!-- 温度滑块：0 ~ 2，控制输出随机性 -->
         <div class="setting-item">
           <div class="setting-info">
+            <!-- value-badge 显示当前数值 -->
             <label>{{ $t('settings.temperature') }} <span class="value-badge">{{ settings.temperature }}</span></label>
             <p>{{ $t('settings.temperatureHint') }}</p>
           </div>
           <input type="range" v-model.number="settings.temperature" min="0" max="2" step="0.1" class="s-range" />
         </div>
 
+        <!-- 上下文长度滑块：2 ~ 50 条，控制携带的历史消息数量 -->
         <div class="setting-item">
           <div class="setting-info">
             <label>{{ $t('settings.contextLength') }} <span class="value-badge">{{ settings.contextLength }} {{ $t('settings.contextLengthUnit') }}</span></label>
@@ -177,6 +197,7 @@
           <input type="range" v-model.number="settings.contextLength" min="2" max="50" step="2" class="s-range" />
         </div>
 
+        <!-- Enter 发送开关 -->
         <div class="setting-item">
           <div class="setting-info">
             <label>{{ $t('settings.sendOnEnter') }}</label>
@@ -189,10 +210,11 @@
         </div>
       </section>
 
-      <!-- 语音 TTS -->
+      <!-- ────────────── 语音 TTS ────────────── -->
       <section class="settings-section">
         <h2 class="section-title"><span class="section-icon">🔊</span> {{ $t('settings.sectionTTS') }}</h2>
 
+        <!-- 自动朗读开关 -->
         <div class="setting-item">
           <div class="setting-info">
             <label>{{ $t('settings.autoRead') }}</label>
@@ -204,6 +226,7 @@
           </label>
         </div>
 
+        <!-- TTS 模型 ID 输入 -->
         <div class="setting-item col">
           <div class="setting-info">
             <label>TTS 模型 ID</label>
@@ -212,6 +235,7 @@
           <input v-model="settings.ttsModel" class="s-input" placeholder="tts-1" />
         </div>
 
+        <!-- TTS 音色输入 -->
         <div class="setting-item col">
           <div class="setting-info">
             <label>{{ $t('settings.ttsVoice') }}</label>
@@ -221,10 +245,11 @@
         </div>
       </section>
 
-      <!-- 图片生成 -->
+      <!-- ────────────── 图片生成 ────────────── -->
       <section class="settings-section">
         <h2 class="section-title"><span class="section-icon">🎨</span> {{ $t('settings.sectionImage') }}</h2>
 
+        <!-- 图片生成模型 ID 输入 -->
         <div class="setting-item col">
           <div class="setting-info">
             <label>图片模型 ID</label>
@@ -233,6 +258,7 @@
           <input v-model="settings.imageModel" class="s-input" placeholder="dall-e-3" />
         </div>
 
+        <!-- 图片尺寸选择 -->
         <div class="setting-item">
           <div class="setting-info">
             <label>尺寸</label>
@@ -246,6 +272,7 @@
           </select>
         </div>
 
+        <!-- 图片质量选择 -->
         <div class="setting-item">
           <div class="setting-info">
             <label>{{ $t('settings.imageQuality') }}</label>
@@ -257,15 +284,17 @@
         </div>
       </section>
 
-      <!-- 外观 -->
+      <!-- ────────────── 外观 ────────────── -->
       <section class="settings-section">
         <h2 class="section-title"><span class="section-icon">✨</span> {{ $t('settings.sectionAppearance') }}</h2>
 
+        <!-- 主题选择：三个按钮（浅色 / 深色 / 跟随系统） -->
         <div class="setting-item">
           <div class="setting-info">
             <label>{{ $t('settings.theme') }}</label>
           </div>
           <div class="theme-picker">
+            <!-- active class 标记当前选中主题 -->
             <button v-for="t in themes" :key="t.value" class="theme-btn" :class="{ active: settings.theme === t.value }" @click="settings.theme = t.value">
               <span class="theme-preview" :style="t.style"></span>
               {{ $t(t.labelKey) }}
@@ -273,21 +302,24 @@
           </div>
         </div>
 
+        <!-- 字体大小选择：三个"A"按钮，字号不同 -->
         <div class="setting-item">
           <div class="setting-info">
             <label>{{ $t('settings.fontSize') }}</label>
           </div>
           <div class="size-picker">
+            <!-- active class 标记当前选中字号 -->
             <button v-for="s in fontSizes" :key="s.value" class="size-btn" :class="[s.cls, { active: settings.fontSize === s.value }]" @click="settings.fontSize = s.value">A</button>
           </div>
         </div>
       </section>
 
-      <!-- 语言 -->
+      <!-- ────────────── 语言 ────────────── -->
       <section class="settings-section">
         <h2 class="section-title"><span class="section-icon">🌐</span> {{ $t('settings.sectionLanguage') }}</h2>
         <div class="setting-item col">
           <div class="lang-picker">
+            <!-- 遍历 LANGUAGES 列表，点击调用 switchLang 切换语言 -->
             <button v-for="lang in LANGUAGES" :key="lang.code" class="lang-btn" :class="{ active: currentLocale === lang.code }" @click="switchLang(lang.code)">
               <span class="lang-flag">{{ lang.flag }}</span>
               <span class="lang-name">{{ lang.label }}</span>
@@ -296,7 +328,7 @@
         </div>
       </section>
 
-      <!-- 危险区 -->
+      <!-- ────────────── 危险区（数据清除） ────────────── -->
       <section class="settings-section">
         <h2 class="section-title"><span class="section-icon">⚙️</span> {{ $t('settings.sectionAdvanced') }}</h2>
         <div class="setting-item">
@@ -304,11 +336,12 @@
             <label class="danger-label">{{ $t('settings.clearData') }}</label>
             <p>{{ $t('settings.clearDataHint') }}</p>
           </div>
+          <!-- 清除数据前需经过确认弹框 -->
           <button class="danger-btn" @click="clearData">{{ $t('settings.clearDataBtn') }}</button>
         </div>
       </section>
 
-      <!-- 关于 -->
+      <!-- ────────────── 关于 ────────────── -->
       <section class="settings-section">
         <h2 class="section-title"><span class="section-icon">ℹ️</span> {{ $t('settings.sectionAbout') }}</h2>
         <div class="about-card">
@@ -323,6 +356,7 @@
         </div>
       </section>
 
+      <!-- 底部自动保存提示 -->
       <div class="save-notice">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <polyline points="20 6 9 17 4 12"/>
@@ -334,6 +368,20 @@
 </template>
 
 <script setup>
+/**
+ * SettingsPage.vue - 设置页面
+ *
+ * 功能模块：
+ *  1. API 连接配置（Base URL / API Key）
+ *  2. 模型检测与选择
+ *  3. 测试连接（发送一条测试消息验证可用性）
+ *  4. 对话参数设置（模型 / System Prompt / 温度 / 上下文长度 / Enter 发送）
+ *  5. TTS 语音设置
+ *  6. 图片生成设置
+ *  7. 外观设置（主题 / 字体大小）
+ *  8. 语言切换
+ *  9. 危险操作（清除本地数据）
+ */
 import { computed, ref, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { settings, resetSettings } from '@/stores/settings'
@@ -342,58 +390,86 @@ import { useModal } from '@/composables/useModal'
 import { useModelDetector } from '@/composables/useModelDetector'
 import { normalizeBaseUrl } from '@/composables/useApiClient'
 
+/** i18n：t 为翻译函数，locale 为当前语言 ref */
 const { t, locale } = useI18n()
+/** 当前激活的语言代码（计算属性，响应式） */
 const currentLocale = computed(() => locale.value)
+/** 模态确认框 composable */
 const { confirm } = useModal()
+/** 模型自动检测 composable：detect 执行检测，detecting 加载状态，detectError 错误信息 */
 const { detect, detecting, error: detectError } = useModelDetector()
+/** chatStream：流式发送消息，用于测试连接功能 */
 import { chatStream } from '@/composables/useApiClient'
 
-// 测试连接
+// ── 测试连接状态 ──────────────────────────────────────────
+/** 测试请求是否进行中 */
 const testing = ref(false)
+/** 测试结果状态：'' = 未测试 | 'ok' = 成功 | 'fail' = 失败 */
 const testStatus = ref('') // '' | 'ok' | 'fail'
+/** 测试成功后的结果详情：{ latency, model, reply } */
 const testResult = ref(null)
+/** 测试失败时的错误信息 */
 const testError = ref('')
 
-// 清理错误信息：去掉 HTML 标签，截短到 120 字符
+/**
+ * 清理错误信息，去掉 HTML 标签并截短到 120 字符。
+ * 特殊处理：Cloudflare 拦截时给出友好提示。
+ *
+ * @param {string} msg - 原始错误消息
+ * @returns {string} 清理后的错误文本
+ */
 const cleanError = (msg) => {
   if (!msg) return ''
+  // 去除所有 HTML 标签（某些 API 返回 HTML 错误页）
   const text = String(msg).replace(/<[^>]*>/g, '').trim()
+  // Cloudflare 拦截场景：给出具体操作建议
   if (text.includes('Just a moment') || text.includes('challenge') || text.includes('Cloudflare')) {
     return '该接口需要浏览器验证（Cloudflare 拦截），请直接在浏览器中访问后再试，或更换其他接口'
   }
+  // 截短，避免错误信息过长影响 UI
   return text.slice(0, 120)
 }
 
+/**
+ * 执行连接测试：发送一条极简消息（Hi, reply with exactly one word: OK）
+ * 通过流式接口验证 URL / Key / 模型三者是否均可用。
+ * 记录延迟、模型 ID 和实际回复内容。
+ */
 const runTest = async () => {
   testing.value = true
   testStatus.value = ''
   testResult.value = null
   testError.value = ''
   const model = settings.defaultModel
-  const t0 = Date.now()
+  const t0 = Date.now() // 记录开始时间，用于计算延迟
   let reply = ''
   try {
     await chatStream({
       messages: [{ role: 'user', content: 'Hi, reply with exactly one word: OK' }],
       model,
-      temperature: 0,
-      onChunk: (c) => { reply += c },
+      temperature: 0, // 温度设为 0，确保回复确定性，避免干扰测试结果
+      onChunk: (c) => { reply += c }, // 收集流式返回的文本片段
     })
     testStatus.value = 'ok'
     testResult.value = {
-      latency: Date.now() - t0,
+      latency: Date.now() - t0, // 总延迟（ms）
       model,
-      reply: reply.trim().slice(0, 80),
+      reply: reply.trim().slice(0, 80), // 截取前 80 字符展示
     }
   } catch (e) {
     testStatus.value = 'fail'
     testError.value = e.message || String(e)
   } finally {
+    // 无论成功失败都要关闭加载状态
     testing.value = false
   }
 }
 
-// 设置页滚动解锁
+// ── 页面滚动控制 ──────────────────────────────────────────
+/**
+ * 进入设置页时解锁页面滚动（主页面可能锁定了 overflow）。
+ * 离开设置页时恢复 overflow: hidden，防止主页面出现滚动条。
+ */
 onMounted(() => {
   document.documentElement.style.overflow = 'auto'
   document.body.style.overflow = 'auto'
@@ -403,29 +479,51 @@ onUnmounted(() => {
   document.body.style.overflow = 'hidden'
 })
 
-// URL 补全预览
+// ── URL 规范化预览 ─────────────────────────────────────────
+/** 规范化后的 URL，当与输入不同时显示在输入框下方作为提示 */
 const normalizedUrl = ref('')
+
+/**
+ * 失焦时对输入的 Base URL 进行规范化处理，
+ * 若结果与原始输入不同则在界面上提示用户。
+ * （实际请求使用规范化后的 URL，此处仅用于预览）
+ */
 const showNormalized = () => {
   const n = normalizeBaseUrl(settings.apiBaseUrl)
+  // 只有规范化结果与原始输入不同才显示提示，相同则清空提示
   normalizedUrl.value = (n && n !== settings.apiBaseUrl) ? n : ''
 }
 
-// 旧接口迁移
+// ── 旧接口迁移 ────────────────────────────────────────────
+/** 已知的旧接口域名列表，用于判断是否需要迁移 */
 const OLD_APIS = ['s2a.dgtw.de', 'openrouter.ai']
+
+/** 计算属性：检测当前 Base URL 是否包含旧接口域名 */
 const isOldApi = computed(() => OLD_APIS.some(a => settings.apiBaseUrl?.includes(a)))
+
+/**
+ * 一键迁移到新接口：将 URL / Key / 模型全部重置为新默认值，
+ * 并清空已检测的模型列表和 URL 规范化提示。
+ */
 const migrateToOpenRouter = () => {
   settings.apiBaseUrl = 'https://api.yexc.top'
   settings.apiKey = 'sk-M0u9pvjqujqT5Z50qz2ek6BGzjcqUjychYq6bleeJosVokAU'
   settings.defaultModel = 'claude-sonnet-4.5'
-  settings.detectedModels = []
-  normalizedUrl.value = ''
+  settings.detectedModels = [] // 清空旧接口检测到的模型列表
+  normalizedUrl.value = ''    // 清空 URL 提示
 }
 
-// API Key 显隐
+// ── API Key 显示/隐藏 ─────────────────────────────────────
+/** 控制 API Key 输入框是否明文显示 */
 const showKey = ref(false)
 
-// 模型检测
+// ── 模型检测与分组 ────────────────────────────────────────
+/** 记录各分组的展开/折叠状态，key 为组名，value 为 boolean */
 const openGroups = ref({})
+
+/**
+ * 将检测到的模型列表按 group 字段分组，返回 { 组名: [模型...] } 的对象。
+ */
 const groupedModels = computed(() => {
   const map = {}
   for (const m of settings.detectedModels) {
@@ -434,16 +532,30 @@ const groupedModels = computed(() => {
   }
   return map
 })
+
+/** 将分组对象转为 [组名, 模型数组][] 的数组，方便 v-for 遍历 */
 const groupedEntries = computed(() => Object.entries(groupedModels.value))
+
+/**
+ * 切换指定分组的展开/折叠状态。
+ * @param {string} name - 分组名称
+ */
 const toggleGroup = (name) => {
   openGroups.value[name] = !openGroups.value[name]
 }
 
+/**
+ * 执行模型检测：调用 API 的 /models 接口获取可用模型列表。
+ * 检测成功后：
+ *  1. 将模型列表存入 settings.detectedModels（自动触发持久化）
+ *  2. 默认展开第一个分组
+ *  3. 若当前未选择模型，自动选中第一个检测到的模型
+ */
 const runDetect = async () => {
   const models = await detect(settings.apiBaseUrl, settings.apiKey)
   if (models.length) {
     settings.detectedModels = models
-    // 默认展开第一组
+    // 默认展开第一组，方便用户直接看到结果
     const first = models[0]?.group
     if (first) openGroups.value[first] = true
     // 如果当前没选模型，自动选第一个
@@ -453,32 +565,56 @@ const runDetect = async () => {
   }
 }
 
-// 语言切换
+// ── 语言切换 ──────────────────────────────────────────────
+/**
+ * 切换界面语言。
+ * 同时更新 vue-i18n 的 locale 和 localStorage 持久化存储。
+ *
+ * @param {string} code - 语言代码，如 'zh' / 'en' / 'ja'
+ */
 const switchLang = (code) => {
-  locale.value = code
-  localStorage.setItem('ai-chat-lang', code)
+  locale.value = code                       // 实时切换 i18n 语言
+  localStorage.setItem('ai-chat-lang', code) // 持久化，下次打开仍生效
 }
 
+// ── 主题与字体配置数据 ────────────────────────────────────
+/**
+ * 主题选项列表，用于模板中渲染主题选择按钮。
+ * style 字段为主题预览方块的内联样式。
+ */
 const themes = [
   { value: 'light',  labelKey: 'settings.themeLight',  style: 'background:#fff;border:1px solid #ddd;' },
   { value: 'dark',   labelKey: 'settings.themeDark',   style: 'background:#1a1a1a;' },
   { value: 'system', labelKey: 'settings.themeSystem', style: 'background:linear-gradient(135deg,#fff 50%,#1a1a1a 50%);border:1px solid #ddd;' },
 ]
 
+/**
+ * 字体大小选项列表，用于渲染三个"A"大小按钮。
+ * cls 字段对应 CSS 类名（fs-sm / fs-md / fs-lg），控制按钮内"A"字的视觉大小。
+ */
 const fontSizes = [
   { value: 'sm', cls: 'fs-sm' },
   { value: 'md', cls: 'fs-md' },
   { value: 'lg', cls: 'fs-lg' },
 ]
 
+// ── 危险操作：重置 / 清除数据 ─────────────────────────────
+/**
+ * 弹出确认框后重置所有设置为默认值。
+ * 使用 useModal 的 confirm() 以保证用户有意为之。
+ */
 const confirmReset = async () => {
   const ok = await confirm({ icon: '🔄', title: t('common.reset'), message: t('settings.resetConfirm'), type: 'warning' })
-  if (ok) resetSettings()
+  if (ok) resetSettings() // 确认后调用 store 的 resetSettings
 }
 
+/**
+ * 弹出确认框后清除所有 localStorage 数据并刷新页面。
+ * 此操作不可恢复，需经过二次确认。
+ */
 const clearData = async () => {
   const ok = await confirm({ icon: '🗑️', title: t('settings.clearData'), message: t('settings.clearConfirm'), type: 'danger', confirmText: t('settings.clearDataBtn') })
-  if (ok) { localStorage.clear(); location.reload() }
+  if (ok) { localStorage.clear(); location.reload() } // 清空全部本地存储后强制刷新
 }
 </script>
 
