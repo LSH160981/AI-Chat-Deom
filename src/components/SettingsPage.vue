@@ -18,6 +18,12 @@
       <section class="settings-section">
         <h2 class="section-title"><span class="section-icon">🔌</span> API 连接</h2>
 
+        <!-- 旧接口迁移提示 -->
+        <div v-if="isOldApi" class="migrate-banner">
+          <span>⚠️ 检测到旧接口（s2a.dgtw.de 已不可用）</span>
+          <button class="migrate-btn" @click="migrateToOpenRouter">一键切换到 OpenRouter 免费接口</button>
+        </div>
+
         <div class="setting-item col">
           <div class="setting-info">
             <label>Base URL</label>
@@ -404,6 +410,16 @@ const showNormalized = () => {
   normalizedUrl.value = (n && n !== settings.apiBaseUrl) ? n : ''
 }
 
+// 旧接口迁移
+const isOldApi = computed(() => settings.apiBaseUrl?.includes('s2a.dgtw.de'))
+const migrateToOpenRouter = () => {
+  settings.apiBaseUrl = 'https://openrouter.ai'
+  settings.apiKey = ''
+  settings.defaultModel = 'meta-llama/llama-3.3-70b-instruct:free'
+  settings.detectedModels = []
+  normalizedUrl.value = ''
+}
+
 // API Key 显隐
 const showKey = ref(false)
 
@@ -563,6 +579,10 @@ const clearData = async () => {
 .about-links { margin-top: 6px !important; display: flex; gap: 8px; align-items: center; }
 .about-links a { color: #60a5fa; text-decoration: none; font-size: 13px; }
 .about-links a:hover { text-decoration: underline; }
+
+.migrate-banner { display: flex; flex-direction: column; gap: 8px; padding: 12px 16px; background: rgba(251,191,36,0.1); border-bottom: 1px solid rgba(251,191,36,0.3); font-size: 13px; color: var(--text); }
+.migrate-btn { align-self: flex-start; padding: 6px 14px; border-radius: 8px; border: 1.5px solid #f59e0b; background: #f59e0b; color: #fff; font-size: 13px; font-weight: 600; cursor: pointer; }
+.migrate-btn:hover { background: #d97706; border-color: #d97706; }
 
 .save-notice { display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 12px; color: var(--text-muted); margin-top: 8px; }
 
