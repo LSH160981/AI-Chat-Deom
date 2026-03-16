@@ -29,6 +29,7 @@
             <option value="openai/o3-mini">o3-mini (推理)</option>
           </optgroup>
           <optgroup label="Anthropic">
+            <option value="claude-sonnet-4-6">Claude Sonnet 4.6 ★</option>
             <option value="claude-sonnet-4-5">Claude Sonnet 4.5</option>
             <option value="claude-opus-4-5">Claude Opus 4.5</option>
             <option value="anthropic/claude-3-5-haiku">Claude 3.5 Haiku</option>
@@ -297,7 +298,7 @@ Object.entries(langMap).forEach(([k, v]) => hljs.registerLanguage(k, v))
 
 const currentMode = ref('chat')
 const sidebarOpen = ref(false)
-const selectedModel = ref('gpt-5-nano')
+const selectedModel = ref('claude-sonnet-4-6')
 const systemPrompt = ref('')
 const temperature = ref(0.7)
 const webSearchEnabled = ref(false)
