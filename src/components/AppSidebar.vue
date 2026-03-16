@@ -35,9 +35,11 @@
         @change="$emit('update:selectedModel', $event.target.value)"
         class="model-select"
       >
-        <optgroup v-for="(group, gName) in groupedModels" :key="gName" :label="gName">
+        <option value="" disabled>— 选择模型 —</option>
+        <template v-for="[gName, group] in groupedEntries" :key="gName">
+          <option disabled style="font-weight:600;color:#888">── {{ gName }} ──</option>
           <option v-for="m in group" :key="m.id" :value="m.id">{{ m.name }}</option>
-        </optgroup>
+        </template>
       </select>
       <!-- 没有检测：手动输入 -->
       <input
@@ -103,6 +105,7 @@ const groupedModels = computed(() => {
   }
   return map
 })
+const groupedEntries = computed(() => Object.entries(groupedModels.value))
 </script>
 
 <style>

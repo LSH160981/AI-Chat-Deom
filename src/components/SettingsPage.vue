@@ -118,7 +118,7 @@
         <!-- 模型列表（分组折叠展示） -->
         <div v-if="settings.detectedModels.length" class="model-list-preview">
           <div
-            v-for="(group, gName) in groupedModels"
+            v-for="[gName, group] in groupedEntries"
             :key="gName"
             class="model-group"
           >
@@ -434,6 +434,7 @@ const groupedModels = computed(() => {
   }
   return map
 })
+const groupedEntries = computed(() => Object.entries(groupedModels.value))
 const toggleGroup = (name) => {
   openGroups.value[name] = !openGroups.value[name]
 }
