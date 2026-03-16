@@ -43,11 +43,32 @@
 
 /* ===== 全局重置 & 基础 ===== */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html, body { height: 100%; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); }
+html, body {
+  height: 100%;
+  /* iOS Safari 用 dvh，不支持时 fallback 到 100% */
+  overflow: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
 
-.chat-app { display: flex; height: 100vh; overflow: hidden; }
+.chat-app {
+  display: flex;
+  height: 100vh;
+  height: 100dvh; /* iOS 动态视口高度，Safari 15.4+ */
+  overflow: hidden;
+}
 
-/* ===== 侧边栏 ===== */
+/* 主区域铺满剩余高度 */
+.main-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-width: 0;
+  /* iOS safe area：底部留出 home indicator */
+  padding-bottom: env(safe-area-inset-bottom);
+}
 .sidebar {
   width: 260px; flex-shrink: 0; background: var(--bg-secondary); border-right: 1px solid var(--border);
   display: flex; flex-direction: column; overflow-y: auto; padding-bottom: 20px;
@@ -120,7 +141,12 @@ html, body { height: 100%; overflow: hidden; font-family: -apple-system, BlinkMa
 .remove-attach { position: absolute; top: -4px; right: 24px; background: #666; color: #fff; border: none; border-radius: 50%; width: 18px; height: 18px; font-size: 11px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
 
 /* ===== 输入区 ===== */
-.input-area { padding: 10px 20px 18px; background: var(--bg); flex-shrink: 0; }
+.input-area {
+  padding: 10px 20px 18px;
+  padding-bottom: max(18px, calc(env(safe-area-inset-bottom) + 10px));
+  background: var(--bg);
+  flex-shrink: 0;
+}
 .input-wrapper { display: flex; align-items: flex-end; gap: 6px; border: 1.5px solid var(--input-border); border-radius: 14px; padding: 8px 8px 8px 10px; transition: border-color 0.2s; max-width: 760px; margin: 0 auto; background: var(--input-bg); }
 .input-wrapper.focused { border-color: #aaa; }
 .attach-btn { width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; border: none; background: transparent; cursor: pointer; color: var(--text-muted); border-radius: 6px; flex-shrink: 0; transition: color 0.15s, background 0.15s; }
@@ -194,10 +220,10 @@ pre.hljs code { background: transparent; padding: 0; color: inherit; }
 
 /* ===== 移动端 ===== */
 @media (max-width: 640px) {
-  .sidebar { position: fixed; top: 0; left: 0; height: 100%; z-index: 20; transform: translateX(-100%); }
+  .sidebar { position: fixed; top: 0; left: 0; height: 100%; height: 100dvh; z-index: 20; transform: translateX(-100%); }
   .sidebar.open { transform: translateX(0); }
   .messages-area { padding: 16px 14px 10px; }
-  .input-area { padding: 8px 14px 14px; }
+  .input-area { padding: 8px 14px max(14px, env(safe-area-inset-bottom)); }
   .message-content { max-width: 92%; }
 }
 
