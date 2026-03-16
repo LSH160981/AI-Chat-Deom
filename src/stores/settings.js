@@ -35,7 +35,14 @@ const defaults = {
 function load() {
   try {
     const saved = localStorage.getItem(STORAGE_KEY)
-    return saved ? { ...defaults, ...JSON.parse(saved) } : { ...defaults }
+    if (!saved) return { ...defaults }
+    const parsed = JSON.parse(saved)
+    // 对关键字段做兜底：若存的是空值则用 defaults 补上
+    const merged = { ...defaults, ...parsed }
+    if (!merged.apiBaseUrl) merged.apiBaseUrl = defaults.apiBaseUrl
+    if (!merged.apiKey)     merged.apiKey     = defaults.apiKey
+    if (!merged.defaultModel) merged.defaultModel = defaults.defaultModel
+    return merged
   } catch {
     return { ...defaults }
   }
