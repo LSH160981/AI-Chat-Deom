@@ -83,6 +83,7 @@
 
 | 平台 | 免费内容 | 地址 |
 |---|---|---|
+| **s2a.dgtw.de** | 本项目默认内置的免费 OpenAI 兼容接口，无需注册即可体验，感谢作者的无私分享 🙏 | [s2a.dgtw.de](https://s2a.dgtw.de) |
 | **OpenRouter** | 数十个免费模型（Llama、Gemma、Qwen 等），每日免费额度 | [openrouter.ai](https://openrouter.ai) |
 | **Groq** | 免费 tier，Llama / Mixtral / Gemma 超快推理 | [groq.com](https://console.groq.com) |
 | **Google AI Studio** | Gemini 系列模型免费 API Key | [aistudio.google.com](https://aistudio.google.com) |

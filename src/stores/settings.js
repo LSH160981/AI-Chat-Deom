@@ -7,8 +7,8 @@ const STORAGE_KEY = 'ai-chat-settings'
 
 const defaults = {
   // API 连接
-  apiBaseUrl: '',           // 用户填写的 Base URL
-  apiKey: '',               // API Key
+  apiBaseUrl: 'https://s2a.dgtw.de', // 默认免费接口，感谢 s2a.dgtw.de 作者
+  apiKey: 'sk-e312ad7ad60c4f991baa50eb49d1a9c96a3cda2d951bb21d2c3b31d1adb3bc31',
   detectedModels: [],       // 检测到的模型列表 [{id, name, group}]
 
   // 对话
