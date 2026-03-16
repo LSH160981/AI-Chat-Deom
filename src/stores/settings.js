@@ -6,13 +6,13 @@ import { reactive, watch } from 'vue'
 const STORAGE_KEY = 'ai-chat-settings'
 
 const defaults = {
-  // API 连接（感谢 s2a.dgtw.de 提供免费接口，因 CF 限制默认改用 OpenRouter）
-  apiBaseUrl: 'https://openrouter.ai',
-  apiKey: '',
+  // API 连接
+  apiBaseUrl: 'https://api.yexc.top',
+  apiKey: 'sk-M0u9pvjqujqT5Z50qz2ek6BGzjcqUjychYq6bleeJosVokAU',
   detectedModels: [],       // 检测到的模型列表 [{id, name, group}]
 
   // 对话
-  defaultModel: 'meta-llama/llama-3.3-70b-instruct:free',
+  defaultModel: 'claude-sonnet-4.5',
   systemPrompt: '',
   temperature: 0.7,
   webSearchEnabled: false,
@@ -37,10 +37,12 @@ function load() {
     const saved = localStorage.getItem(STORAGE_KEY)
     if (!saved) return { ...defaults }
     const parsed = JSON.parse(saved)
-    // 对关键字段做兜底：若存的是空值或旧的 s2a 地址则用 defaults 补上
+    // 关键字段兜底：空值或旧接口地址自动替换
     const merged = { ...defaults, ...parsed }
-    if (!merged.apiBaseUrl || merged.apiBaseUrl === 'https://s2a.dgtw.de') merged.apiBaseUrl = defaults.apiBaseUrl
-    if (!merged.defaultModel || merged.defaultModel === 'gpt-4o-mini') merged.defaultModel = defaults.defaultModel
+    const oldApis = ['https://s2a.dgtw.de', 'https://openrouter.ai']
+    if (!merged.apiBaseUrl || oldApis.includes(merged.apiBaseUrl)) merged.apiBaseUrl = defaults.apiBaseUrl
+    if (!merged.apiKey || merged.apiKey.startsWith('sk-e312') || !merged.apiKey) merged.apiKey = defaults.apiKey
+    if (!merged.defaultModel || merged.defaultModel === 'gpt-4o-mini' || merged.defaultModel.includes(':free')) merged.defaultModel = defaults.defaultModel
     return merged
   } catch {
     return { ...defaults }

@@ -20,8 +20,8 @@
 
         <!-- 旧接口迁移提示 -->
         <div v-if="isOldApi" class="migrate-banner">
-          <span>⚠️ 检测到旧接口（s2a.dgtw.de 已不可用）</span>
-          <button class="migrate-btn" @click="migrateToOpenRouter">一键切换到 OpenRouter 免费接口</button>
+          <span>⚠️ 检测到旧接口配置，建议切换到新接口</span>
+          <button class="migrate-btn" @click="migrateToOpenRouter">一键切换到最新接口</button>
         </div>
 
         <div class="setting-item col">
@@ -411,11 +411,12 @@ const showNormalized = () => {
 }
 
 // 旧接口迁移
-const isOldApi = computed(() => settings.apiBaseUrl?.includes('s2a.dgtw.de'))
+const OLD_APIS = ['s2a.dgtw.de', 'openrouter.ai']
+const isOldApi = computed(() => OLD_APIS.some(a => settings.apiBaseUrl?.includes(a)))
 const migrateToOpenRouter = () => {
-  settings.apiBaseUrl = 'https://openrouter.ai'
-  settings.apiKey = ''
-  settings.defaultModel = 'meta-llama/llama-3.3-70b-instruct:free'
+  settings.apiBaseUrl = 'https://api.yexc.top'
+  settings.apiKey = 'sk-M0u9pvjqujqT5Z50qz2ek6BGzjcqUjychYq6bleeJosVokAU'
+  settings.defaultModel = 'claude-sonnet-4.5'
   settings.detectedModels = []
   normalizedUrl.value = ''
 }
