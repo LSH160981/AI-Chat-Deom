@@ -106,7 +106,11 @@ export async function chatStream({ messages, model, temperature, signal, onChunk
 
   if (!resp.ok) {
     const err = await resp.text()
-    throw new Error(`HTTP ${resp.status}: ${err.slice(0, 200)}`)
+    const clean = err.replace(/<[^>]*>/g, '').trim()
+    if (clean.includes('Just a moment') || clean.includes('Cloudflare') || clean.includes('challenge')) {
+      throw new Error(`HTTP ${resp.status}: 接口被 Cloudflare 拦截，请直接在浏览器中访问该接口地址后再试`)
+    }
+    throw new Error(`HTTP ${resp.status}: ${clean.slice(0, 150)}`)
   }
 
   // 解析 SSE 流

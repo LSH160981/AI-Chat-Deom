@@ -63,7 +63,12 @@ export function useModelDetector() {
 
       return models
     } catch (e) {
-      error.value = e.message || String(e)
+      const msg = String(e.message || e)
+      if (msg.includes('Just a moment') || msg.includes('challenge') || msg.includes('Cloudflare')) {
+        error.value = '该接口需要浏览器验证（Cloudflare），请直接在浏览器中访问后再试，或更换接口'
+      } else {
+        error.value = msg.replace(/<[^>]*>/g, '').slice(0, 120)
+      }
       return []
     } finally {
       detecting.value = false

@@ -68,7 +68,7 @@
 
         <!-- 检测错误 -->
         <div v-if="detectError" class="detect-error">
-          <span>⚠️ {{ detectError }}</span>
+          <span>⚠️ </span><span v-text="cleanError(detectError)"></span>
         </div>
 
         <!-- 测试连接 -->
@@ -106,7 +106,7 @@
           </div>
         </div>
         <div v-if="testError" class="detect-error">
-          ⚠️ {{ testError }}
+          ⚠️ <span v-text="cleanError(testError)"></span>
         </div>
 
         <!-- 模型列表（分组折叠展示） -->
@@ -347,6 +347,16 @@ const testing = ref(false)
 const testStatus = ref('') // '' | 'ok' | 'fail'
 const testResult = ref(null)
 const testError = ref('')
+
+// 清理错误信息：去掉 HTML 标签，截短到 120 字符
+const cleanError = (msg) => {
+  if (!msg) return ''
+  const text = String(msg).replace(/<[^>]*>/g, '').trim()
+  if (text.includes('Just a moment') || text.includes('challenge') || text.includes('Cloudflare')) {
+    return '该接口需要浏览器验证（Cloudflare 拦截），请直接在浏览器中访问后再试，或更换其他接口'
+  }
+  return text.slice(0, 120)
+}
 
 const runTest = async () => {
   testing.value = true
