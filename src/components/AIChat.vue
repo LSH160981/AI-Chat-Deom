@@ -26,7 +26,7 @@
           </svg>
         </button>
         <span class="topbar-title">{{ currentModeLabel }}</span>
-        <button v-if="currentMode === 'chat' && messages.length > 0" class="icon-btn" @click="newChat" title="清空">
+        <button v-if="currentMode === 'chat' && messages.length > 0" class="icon-btn" @click="newChat" :title="$t('common.clear')">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/>
             <path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/>

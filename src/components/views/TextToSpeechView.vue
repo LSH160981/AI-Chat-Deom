@@ -2,13 +2,13 @@
   <div class="gen-area">
     <div v-if="!audioUrl && !isLoading" class="empty-state">
       <div class="empty-icon">🔊</div>
-      <h2>文字转语音</h2>
-      <p>支持 OpenAI / AWS Polly / ElevenLabs</p>
+      <h2>$t('tts.empty')</h2>
+      <p>$t('tts.emptyHint')</p>
     </div>
 
     <div v-if="isLoading" class="gen-loading">
       <div class="gen-spinner"></div>
-      <p>正在合成语音...</p>
+      <p>$t('tts.synthesizing')</p>
     </div>
 
     <div v-if="audioUrl" class="audio-player">
@@ -21,7 +21,7 @@
           v-model="inputValue"
           @focus="isFocused = true"
           @blur="isFocused = false"
-          placeholder="输入要转换为语音的文字..."
+          placeholder="$t('tts.placeholder')"
           rows="3"
           :disabled="isLoading"
           class="input-textarea"

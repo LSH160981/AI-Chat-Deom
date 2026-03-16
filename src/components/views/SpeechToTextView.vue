@@ -2,13 +2,13 @@
   <div class="gen-area">
     <div v-if="!transcription && !isLoading" class="empty-state">
       <div class="empty-icon">🎙️</div>
-      <h2>语音转文字</h2>
-      <p>录音或上传音频文件</p>
+      <h2>$t('stt.empty')</h2>
+      <p>$t('stt.emptyHint')</p>
     </div>
 
     <div v-if="isLoading" class="gen-loading">
       <div class="gen-spinner"></div>
-      <p>正在转录...</p>
+      <p>$t('stt.transcribing')</p>
     </div>
 
     <div v-if="transcription" class="transcription-result">
@@ -22,12 +22,12 @@
         :class="{ recording: isRecording }"
         @click="$emit('toggleRecording')"
       >
-        {{ isRecording ? '⏹ 停止录音' : '🎙 开始录音' }}
+        {{ isRecording ? $t('stt.stopRecord') : $t('stt.startRecord') }}
       </button>
       <div class="or-divider">或</div>
       <label class="upload-audio-btn">
         <input type="file" accept="audio/*" @change="$emit('upload', $event)" style="display:none" />
-        📁 上传音频文件
+        $t('stt.uploadAudio')
       </label>
     </div>
   </div>

@@ -3,7 +3,7 @@
     <!-- 空状态 -->
     <div v-if="messages.length === 0" class="empty-state">
       <div class="empty-icon">✦</div>
-      <h2>有什么可以帮你的？</h2>
+      <h2>$t('chat.empty')</h2>
       <p>{{ selectedModel }}</p>
     </div>
 
@@ -19,7 +19,7 @@
             v-if="msg.role === 'assistant' && msg.content"
             class="msg-tts-btn"
             @click="$emit('speak', msg.content, i)"
-            :title="speakingIdx === i ? '停止' : '朗读'"
+            :title="speakingIdx === i ? $t('chat.stopSpeak') : $t('chat.speak')"
           >{{ speakingIdx === i ? '⏹' : '🔊' }}</button>
         </div>
       </div>
@@ -43,14 +43,14 @@
   <!-- 输入区 -->
   <div class="input-area">
     <div class="input-wrapper" :class="{ focused: isFocused }">
-      <label class="attach-btn" title="上传图片">
+      <label class="attach-btn" :title="$t('chat.uploadImage')">
         <input type="file" accept="image/*" @change="$emit('imageUpload', $event)" style="display:none" />
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/>
           <polyline points="21 15 16 10 5 21"/>
         </svg>
       </label>
-      <button class="attach-btn" :class="{ recording: isRecording }" @click="$emit('toggleRecording')" title="语音输入">
+      <button class="attach-btn" :class="{ recording: isRecording }" @click="$emit('toggleRecording')" :title="$t('chat.voiceInput')">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
           <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
@@ -64,7 +64,7 @@
         @focus="isFocused = true"
         @blur="isFocused = false"
         @input="autoResize"
-        placeholder="给 AI 发消息..."
+        placeholder="$t('chat.placeholder')"
         rows="1"
         :disabled="isLoading"
         class="input-textarea"
@@ -75,7 +75,7 @@
         </svg>
       </button>
     </div>
-    <p class="disclaimer">AI 生成内容可能存在错误，请核实重要信息</p>
+    <p class="disclaimer">$t('chat.disclaimer')</p>
   </div>
 </template>
 
