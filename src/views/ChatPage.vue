@@ -40,7 +40,7 @@
         <!-- 当前模式标题 -->
         <span class="topbar-title">{{ currentModeLabel }}</span>
         <!-- 清空按钮：仅在聊天模式且有消息时显示 -->
-        <button v-if="currentMode === 'chat' && messages.length > 0" class="icon-btn" @click="newChat" :title="$t('common.clear')">
+        <button v-if="currentMode === MODE.CHAT && messages.length > 0" class="icon-btn" @click="newChat" :title="$t('common.clear')">
           <AppIcon name="trash" :size="16" />
         </button>
       </header>
@@ -58,7 +58,7 @@
         ref="chatViewRef" 用于父组件调用子组件暴露的方法（滚动/聚焦/重置）
       -->
       <ChatView
-        v-if="currentMode === 'chat'"
+        v-if="currentMode === MODE.CHAT"
         ref="chatViewRef"
         :messages="messages"
         :isLoading="isLoading"
@@ -76,7 +76,7 @@
 
       <!-- 文生图视图：模式为 txt2img 时渲染 -->
       <ImageGenView
-        v-else-if="currentMode === 'txt2img'"
+        v-else-if="currentMode === MODE.TXT2IMG"
         :generatedImages="generatedImages"
         :isLoading="isLoading"
         v-model="userInput"
@@ -86,7 +86,7 @@
 
       <!-- 语音转文字视图：模式为 speech2txt 时渲染 -->
       <SpeechToTextView
-        v-else-if="currentMode === 'speech2txt'"
+        v-else-if="currentMode === MODE.SPEECH2TXT"
         :transcription="transcription"
         :isLoading="isLoading"
         :isRecording="isRecording"
@@ -97,7 +97,7 @@
 
       <!-- 文字转语音视图：模式为 txt2speech 时渲染 -->
       <TextToSpeechView
-        v-else-if="currentMode === 'txt2speech'"
+        v-else-if="currentMode === MODE.TXT2SPEECH"
         :audioUrl="audioUrl"
         :isLoading="isLoading"
         v-model="userInput"
@@ -125,6 +125,14 @@ import { chatStream, generateImage as apiGenerateImage, transcribeAudio, synthes
 import { CHAT_MODES } from '@/constants/models'
 import { settings } from '@/stores/settings'
 
+/** 功能模式 ID 常量，避免散落的魔法字符串 */
+const MODE = {
+  CHAT:       'chat',
+  TXT2IMG:    'txt2img',
+  SPEECH2TXT: 'speech2txt',
+  TXT2SPEECH: 'txt2speech',
+}
+
 // 国际化翻译函数
 const { t } = useI18n()
 // 全局模态弹窗（alert/confirm）
@@ -133,7 +141,7 @@ const { alert } = useModal()
 // ===== 会话状态 =====
 
 /** 当前功能模式：chat / txt2img / speech2txt / txt2speech */
-const currentMode = ref('chat')
+const currentMode = ref(MODE.CHAT)
 
 /** 侧边栏是否打开 */
 const sidebarOpen = ref(false)
@@ -339,7 +347,10 @@ const toggleRecording = async () => {
         const text = await transcribeAudio(blob)
         // 将转写结果追加到输入框（如果已有内容则加空格分隔）
         userInput.value += (userInput.value ? ' ' : '') + text
-      } catch (e) { console.error(e) }
+      } catch (e) {
+          // TODO: 接入统一 logger
+          if (import.meta.env.DEV) console.error('[ChatPage]', e)
+        }
     })
   } catch {
     // 麦克风权限被拒绝时弹窗提示

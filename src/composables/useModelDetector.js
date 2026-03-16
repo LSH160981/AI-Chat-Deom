@@ -16,6 +16,23 @@ import { ref } from 'vue'
 import { normalizeBaseUrl, detectProvider, buildHeaders } from './useApiClient'
 import { settings } from '@/stores/settings'
 
+// ===== 请求超时常量（毫秒）=====
+const TIMEOUT = {
+  DETECT: 10000,
+}
+
+// ===== Cloudflare 拦截特征字符串 =====
+const CF_PATTERNS = ['Just a moment', 'challenge', 'Cloudflare']
+
+/**
+ * 判断错误消息是否为 Cloudflare 拦截
+ * @param {string} msg
+ * @returns {boolean}
+ */
+function isCFBlock(msg) {
+  return CF_PATTERNS.some(p => msg.includes(p))
+}
+
 /**
  * 模型检测 Composable
  *
@@ -58,7 +75,7 @@ export function useModelDetector() {
         // Gemini 使用独立的 REST API 获取模型列表（与 OpenAI 兼容端点不同）
         const resp = await fetch(
           `https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`,
-          { signal: AbortSignal.timeout(10000) } // 设置 10 秒超时
+          { signal: AbortSignal.timeout(TIMEOUT.DETECT) } // 设置超时
         )
         if (!resp.ok) throw new Error(`HTTP ${resp.status}`)
         const data = await resp.json()
@@ -75,7 +92,7 @@ export function useModelDetector() {
         if (apiKey) headers['Authorization'] = `Bearer ${apiKey}` // 有 API Key 时加认证头
         const resp = await fetch(baseUrl + '/models', {
           headers,
-          signal: AbortSignal.timeout(10000), // 设置 10 秒超时，避免卡死
+          signal: AbortSignal.timeout(TIMEOUT.DETECT), // 设置超时，避免卡死
         })
         if (!resp.ok) throw new Error(`HTTP ${resp.status}`)
         const data = await resp.json()
@@ -99,7 +116,7 @@ export function useModelDetector() {
     } catch (e) {
       const msg = String(e.message || e)
       // 特殊处理 Cloudflare 验证拦截，给出可操作的提示
-      if (msg.includes('Just a moment') || msg.includes('challenge') || msg.includes('Cloudflare')) {
+      if (isCFBlock(msg)) {
         error.value = '该接口需要浏览器验证（Cloudflare），请直接在浏览器中访问后再试，或更换接口'
       } else {
         error.value = msg.replace(/<[^>]*>/g, '').slice(0, 120) // 剥离 HTML 标签，截取前 120 字符

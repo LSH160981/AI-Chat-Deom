@@ -15,6 +15,18 @@
  */
 import { settings } from '@/stores/settings'
 
+// ===== 请求超时常量（毫秒）=====
+const TIMEOUT = {
+  DETECT: 10000,
+  CHAT:   60000,
+  TTS:    30000,
+  STT:    30000,
+  IMAGE:  60000,
+}
+
+// ===== Cloudflare 拦截特征字符串 =====
+const CF_PATTERNS = ['Just a moment', 'Cloudflare', 'challenge']
+
 // ===== URL 智能补全规则表 =====
 // 每条规则包含：match（用于匹配域名的正则）、path（该服务商 API 路径前缀）
 const PROVIDER_RULES = [
@@ -177,7 +189,7 @@ export async function chatStream({ messages, model, temperature, signal, onChunk
     const err = await resp.text()
     const clean = err.replace(/<[^>]*>/g, '').trim() // 剥离 HTML 标签，提取纯文本错误信息
     // 特判 Cloudflare 拦截（返回 HTML 验证页），给出友好提示
-    if (clean.includes('Just a moment') || clean.includes('Cloudflare') || clean.includes('challenge')) {
+    if (CF_PATTERNS.some(p => clean.includes(p))) {
       throw new Error(`HTTP ${resp.status}: 接口被 Cloudflare 拦截，请直接在浏览器中访问该接口地址后再试`)
     }
     throw new Error(`HTTP ${resp.status}: ${clean.slice(0, 150)}`) // 截取前150字符避免消息过长
