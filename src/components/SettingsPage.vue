@@ -16,7 +16,8 @@
       <!-- 语言 -->
       <section class="settings-section">
         <h2 class="section-title"><span class="section-icon">🌐</span> {{ $t('settings.sectionLanguage') }}</h2>
-        <div class="setting-item">
+        <!-- 语言 -->
+        <div class="setting-item col">
           <div class="setting-info">
             <label>{{ $t('settings.language') }}</label>
             <p>{{ $t('settings.languageHint') }}</p>
@@ -29,8 +30,8 @@
               :class="{ active: currentLocale === lang.code }"
               @click="switchLang(lang.code)"
             >
-              <span>{{ lang.flag }}</span>
-              <span>{{ lang.label }}</span>
+              <span class="lang-flag">{{ lang.flag }}</span>
+              <span class="lang-name">{{ lang.label }}</span>
             </button>
           </div>
         </div>
@@ -352,10 +353,31 @@ const clearData = async () => {
 .s-toggle input:checked + .s-toggle-track::before { transform: translateX(20px); }
 
 /* 语言选择 */
-.lang-picker { display: flex; flex-wrap: wrap; gap: 6px; }
-.lang-btn { display: flex; align-items: center; gap: 5px; padding: 5px 10px; border: 1.5px solid #e0e0e0; border-radius: 20px; background: #fff; font-size: 13px; color: #666; cursor: pointer; transition: all 0.15s; }
-.lang-btn:hover { border-color: #aaa; color: #333; }
-.lang-btn.active { border-color: #1a1a1a; color: #1a1a1a; font-weight: 600; background: #f8f8f8; }
+.lang-picker {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin-top: 10px;
+}
+.lang-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border: 1.5px solid #e0e0e0;
+  border-radius: 10px;
+  background: #fff;
+  font-size: 14px;
+  color: #555;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-align: left;
+  width: 100%;
+}
+.lang-btn:hover { border-color: #aaa; color: #333; background: #fafafa; }
+.lang-btn.active { border-color: #1a1a1a; color: #1a1a1a; font-weight: 600; background: #f4f4f4; }
+.lang-flag { font-size: 18px; flex-shrink: 0; }
+.lang-name { font-size: 13px; }
 
 /* 主题 */
 .theme-picker { display: flex; gap: 8px; flex-wrap: wrap; }
