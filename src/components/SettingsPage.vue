@@ -254,9 +254,11 @@ import { useI18n } from 'vue-i18n'
 import { settings, resetSettings } from '@/stores/settings'
 import { MODEL_LIST, IMAGE_MODEL_LIST, TTS_VOICE_MAP } from '@/config/models'
 import { LANGUAGES } from '@/i18n'
+import { useModal } from '@/composables/useModal'
 
-const { locale } = useI18n()
+const { t, locale } = useI18n()
 const currentLocale = computed(() => locale.value)
+const { confirm, alert } = useModal()
 
 const switchLang = (code) => {
   locale.value = code
@@ -275,12 +277,25 @@ const fontSizes = [
   { value: 'lg', cls: 'fs-lg' },
 ]
 
-const confirmReset = () => {
-  if (confirm(useI18n().t('settings.resetConfirm'))) resetSettings()
+const confirmReset = async () => {
+  const ok = await confirm({
+    icon: '🔄',
+    title: t('common.reset'),
+    message: t('settings.resetConfirm'),
+    type: 'warning',
+  })
+  if (ok) resetSettings()
 }
 
-const clearData = () => {
-  if (confirm(useI18n().t('settings.clearConfirm'))) {
+const clearData = async () => {
+  const ok = await confirm({
+    icon: '🗑️',
+    title: t('settings.clearData'),
+    message: t('settings.clearConfirm'),
+    type: 'danger',
+    confirmText: t('settings.clearDataBtn'),
+  })
+  if (ok) {
     localStorage.clear()
     location.reload()
   }

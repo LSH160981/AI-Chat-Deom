@@ -4,13 +4,7 @@
       :open="sidebarOpen"
       v-model:currentMode="currentMode"
       v-model:selectedModel="selectedModel"
-      v-model:systemPrompt="systemPrompt"
-      v-model:temperature="temperature"
-      v-model:webSearchEnabled="webSearchEnabled"
-      v-model:ttsEnabled="ttsEnabled"
-      v-model:ttsVoice="ttsVoice"
-      v-model:ttsProvider="ttsProvider"
-      v-model:imageModel="imageModel"
+      v-model:systemPrompt="sessionSystemPrompt"
       @close="sidebarOpen = false"
       @newChat="newChat"
     />
@@ -18,7 +12,6 @@
     <div v-if="sidebarOpen" class="overlay" @click="sidebarOpen = false"></div>
 
     <main class="main-area">
-      <!-- 顶栏 -->
       <header class="topbar">
         <button class="icon-btn" @click="sidebarOpen = !sidebarOpen">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -34,7 +27,6 @@
         </button>
       </header>
 
-      <!-- 视图 -->
       <ChatView
         v-if="currentMode === 'chat'"
         ref="chatViewRef"
@@ -80,7 +72,6 @@
       />
     </main>
 
-    <!-- 灯箱 -->
     <div v-if="lightboxSrc" class="lightbox" @click="lightboxSrc = null">
       <img :src="lightboxSrc" />
     </div>
@@ -89,6 +80,7 @@
 
 <script setup>
 import { ref, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import AppSidebar from './AppSidebar.vue'
 import ChatView from './views/ChatView.vue'
 import ImageGenView from './views/ImageGenView.vue'
@@ -96,22 +88,19 @@ import SpeechToTextView from './views/SpeechToTextView.vue'
 import TextToSpeechView from './views/TextToSpeechView.vue'
 import { usePuter } from '@/composables/usePuter'
 import { useRecorder } from '@/composables/useRecorder'
+import { useModal } from '@/composables/useModal'
 import { CHAT_MODES } from '@/config/models'
+import { settings } from '@/stores/settings'
 
-// ===== Puter SDK =====
+const { t } = useI18n()
 const { puter: getPuter } = usePuter()
+const { alert } = useModal()
 
-// ===== 状态 =====
+// ===== 当前会话状态（不持久化）=====
 const currentMode = ref('chat')
 const sidebarOpen = ref(false)
-const selectedModel = ref('claude-sonnet-4-5')
-const systemPrompt = ref('')
-const temperature = ref(0.7)
-const webSearchEnabled = ref(false)
-const ttsEnabled = ref(false)
-const ttsVoice = ref('nova')
-const ttsProvider = ref('openai')
-const imageModel = ref('gpt-image-1-mini')
+const selectedModel = ref(settings.defaultModel)   // 初始值来自设置
+const sessionSystemPrompt = ref(settings.systemPrompt) // 会话级可覆盖
 
 const messages = ref([])
 const userInput = ref('')
@@ -125,13 +114,10 @@ const lightboxSrc = ref(null)
 const chatViewRef = ref(null)
 let currentAudio = null
 
-// ===== 录音 =====
 const { isRecording, startRecording, stopRecording } = useRecorder()
 
-// ===== 计算属性 =====
 const currentModeLabel = computed(() => CHAT_MODES.find(m => m.id === currentMode.value)?.label || '')
 
-// ===== 通用 =====
 const newChat = () => {
   messages.value = []
   userInput.value = ''
@@ -162,13 +148,21 @@ const sendMessage = async () => {
 
   try {
     const history = []
-    if (systemPrompt.value) history.push({ role: 'system', content: systemPrompt.value })
-    for (const m of messages.value.slice(0, -1)) {
+    const sysPrompt = sessionSystemPrompt.value || settings.systemPrompt
+    if (sysPrompt) history.push({ role: 'system', content: sysPrompt })
+
+    // 携带上下文（受 settings.contextLength 限制）
+    const contextMsgs = messages.value.slice(0, -1).slice(-settings.contextLength)
+    for (const m of contextMsgs) {
       history.push({ role: m.role, content: m.content })
     }
 
-    const opts = { model: selectedModel.value, stream: true, temperature: temperature.value }
-    if (webSearchEnabled.value) opts.tools = [{ type: 'web_search' }]
+    const opts = {
+      model: selectedModel.value,
+      stream: true,
+      temperature: settings.temperature,
+    }
+    if (settings.webSearchEnabled) opts.tools = [{ type: 'web_search' }]
 
     let response
     if (img) {
@@ -188,12 +182,15 @@ const sendMessage = async () => {
       }
     }
 
-    if (ttsEnabled.value && full) {
-      const audio = await puter.ai.txt2speech(full.slice(0, 500), { provider: 'openai', voice: ttsVoice.value })
+    if (settings.ttsEnabled && full) {
+      const audio = await puter.ai.txt2speech(full.slice(0, 500), {
+        provider: settings.ttsProvider,
+        voice: settings.ttsVoice,
+      })
       audio.play()
     }
   } catch (e) {
-    messages.value.push({ role: 'assistant', content: `⚠️ 出错了：${e.message || e}` })
+    messages.value.push({ role: 'assistant', content: t('chat.error', { msg: e.message || e }) })
   } finally {
     isLoading.value = false
     chatViewRef.value?.scrollToBottom()
@@ -211,14 +208,17 @@ const speakText = async (text, idx) => {
   }
   speakingIdx.value = idx
   try {
-    const audio = await puter.ai.txt2speech(text.slice(0, 500), { provider: 'openai', voice: ttsVoice.value })
+    const audio = await puter.ai.txt2speech(text.slice(0, 500), {
+      provider: settings.ttsProvider,
+      voice: settings.ttsVoice,
+    })
     currentAudio = audio
     audio.play()
     audio.onended = () => { speakingIdx.value = -1; currentAudio = null }
   } catch { speakingIdx.value = -1 }
 }
 
-// ===== 语音输入（Chat 模式麦克风）=====
+// ===== 语音输入 =====
 const toggleRecording = async () => {
   if (isRecording.value) { stopRecording(); return }
   try {
@@ -230,7 +230,9 @@ const toggleRecording = async () => {
         userInput.value += (userInput.value ? ' ' : '') + (typeof result === 'string' ? result : result.text || '')
       } catch (e) { console.error(e) }
     })
-  } catch { alert('麦克风权限被拒绝') }
+  } catch {
+    await alert({ icon: '🎙️', title: t('stt.micDenied'), showCancel: false })
+  }
 }
 
 // ===== 文生图 =====
@@ -242,10 +244,16 @@ const generateImage = async () => {
   isLoading.value = true
   generatedImages.value = []
   try {
-    const img = await puter.ai.txt2img(prompt, { model: imageModel.value })
+    const img = await puter.ai.txt2img(prompt, {
+      model: settings.imageModel,
+      quality: settings.imageQuality,
+    })
     generatedImages.value = [img.src]
-  } catch (e) { alert('图片生成失败：' + (e.message || e)) }
-  finally { isLoading.value = false }
+  } catch (e) {
+    await alert({ icon: '⚠️', title: t('image.failed', { msg: e.message || e }), showCancel: false })
+  } finally {
+    isLoading.value = false
+  }
 }
 
 // ===== 语音转文字 =====
@@ -259,10 +267,15 @@ const toggleSTTRecording = async () => {
       try {
         const result = await puter.ai.speech2txt(blob)
         transcription.value = typeof result === 'string' ? result : result.text || JSON.stringify(result)
-      } catch (e) { alert('转录失败：' + e.message) }
-      finally { isLoading.value = false }
+      } catch (e) {
+        await alert({ icon: '⚠️', title: t('stt.failed', { msg: e.message }), showCancel: false })
+      } finally {
+        isLoading.value = false
+      }
     })
-  } catch { alert('麦克风权限被拒绝') }
+  } catch {
+    await alert({ icon: '🎙️', title: t('stt.micDenied'), showCancel: false })
+  }
 }
 
 const handleAudioUpload = async (e) => {
@@ -274,8 +287,11 @@ const handleAudioUpload = async (e) => {
   try {
     const result = await puter.ai.speech2txt(file)
     transcription.value = typeof result === 'string' ? result : result.text || JSON.stringify(result)
-  } catch (err) { alert('转录失败：' + err.message) }
-  finally { isLoading.value = false }
+  } catch (err) {
+    await alert({ icon: '⚠️', title: t('stt.failed', { msg: err.message }), showCancel: false })
+  } finally {
+    isLoading.value = false
+  }
 }
 
 // ===== 文字转语音 =====
@@ -286,10 +302,16 @@ const synthesizeSpeech = async () => {
   isLoading.value = true
   audioUrl.value = null
   try {
-    const audio = await puter.ai.txt2speech(text, { provider: ttsProvider.value, voice: ttsVoice.value })
+    const audio = await puter.ai.txt2speech(text, {
+      provider: settings.ttsProvider,
+      voice: settings.ttsVoice,
+    })
     audioUrl.value = audio.src
-  } catch (e) { alert('语音合成失败：' + e.message) }
-  finally { isLoading.value = false }
+  } catch (e) {
+    await alert({ icon: '⚠️', title: t('tts.failed', { msg: e.message }), showCancel: false })
+  } finally {
+    isLoading.value = false
+  }
 }
 </script>
 
