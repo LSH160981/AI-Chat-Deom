@@ -12,7 +12,7 @@ const defaults = {
   detectedModels: [],       // 检测到的模型列表 [{id, name, group}]
 
   // 对话
-  defaultModel: '',
+  defaultModel: 'gpt-4o-mini',
   systemPrompt: '',
   temperature: 0.7,
   webSearchEnabled: false,

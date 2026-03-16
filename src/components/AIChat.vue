@@ -146,11 +146,22 @@ const sendMessage = async () => {
   const text = userInput.value.trim()
   if (!text || isLoading.value) return
 
+  const model = selectedModel.value || settings.defaultModel
+  if (!model) {
+    await alert({ icon: '⚙️', title: '未选择模型', message: '请先在设置页检测模型，或手动输入模型 ID', showCancel: false })
+    return
+  }
+  if (!settings.apiBaseUrl) {
+    await alert({ icon: '⚙️', title: '未配置 API', message: '请先在设置页填写 API 地址和密钥', showCancel: false })
+    return
+  }
+
+  const img = attachedImage.value
   userInput.value = ''
   attachedImage.value = null
   chatViewRef.value?.resetInputHeight()
 
-  const userMsg = { role: 'user', content: text, image: attachedImage.value }
+  const userMsg = { role: 'user', content: text, image: img }
   messages.value.push(userMsg)
   isLoading.value = true
   chatViewRef.value?.scrollToBottom()
@@ -170,7 +181,7 @@ const sendMessage = async () => {
   try {
     await chatStream({
       messages: history,
-      model: selectedModel.value || settings.defaultModel,
+      model,
       temperature: settings.temperature,
       signal: abortController.signal,
       onChunk: (chunk) => {
