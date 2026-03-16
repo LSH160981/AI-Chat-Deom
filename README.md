@@ -83,7 +83,9 @@
 
 | 平台 | 免费内容 | 地址 |
 |---|---|---|
-| **s2a.dgtw.de** | 本项目默认内置的免费 OpenAI 兼容接口，感谢 [s2a.dgtw.de](https://s2a.dgtw.de) 🙏 | [s2a.dgtw.de](https://s2a.dgtw.de) |
+| **api.yexc.top** | 本项目当前默认接口，提供 Claude / Gemini / GPT / DeepSeek 等最新模型，感谢 [api.yexc.top](https://api.yexc.top) 🙏 | [api.yexc.top](https://api.yexc.top) |
+| **sub.jia4u.de** | 提供 OpenAI 兼容接口，感谢 [sub.jia4u.de](https://sub.jia4u.de) 🙏 | [sub.jia4u.de](https://sub.jia4u.de) |
+| **s2a.dgtw.de** | 感谢 [s2a.dgtw.de](https://s2a.dgtw.de) 提供的免费 OpenAI 兼容接口 🙏 | [s2a.dgtw.de](https://s2a.dgtw.de) |
 | **OpenRouter** | 数十个免费模型（Llama、Gemma、Qwen 等），每日免费额度 | [openrouter.ai](https://openrouter.ai) |
 | **Groq** | 免费 tier，Llama / Mixtral / Gemma 超快推理 | [groq.com](https://console.groq.com) |
 | **Google AI Studio** | Gemini 系列模型免费 API Key | [aistudio.google.com](https://aistudio.google.com) |
