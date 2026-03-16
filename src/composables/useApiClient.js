@@ -59,12 +59,16 @@ export function detectProvider(baseUrl) {
 // ===== 通用请求头（导出供 detector 使用）=====
 export function buildHeaders(apiKey, provider) {
   const h = { 'Content-Type': 'application/json' }
-  if (!apiKey) return h
   if (provider === 'anthropic') {
-    h['x-api-key'] = apiKey
+    if (apiKey) h['x-api-key'] = apiKey
     h['anthropic-version'] = '2023-06-01'
   } else {
-    h['Authorization'] = `Bearer ${apiKey}`
+    if (apiKey) h['Authorization'] = `Bearer ${apiKey}`
+  }
+  // OpenRouter 需要 Referer（即使免费模型也建议加）
+  if (provider === 'openrouter') {
+    h['HTTP-Referer'] = 'https://github.com/LSH160981/AI-Chat-Deom'
+    h['X-Title'] = 'AI Chat'
   }
   return h
 }
