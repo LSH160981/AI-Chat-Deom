@@ -3,7 +3,7 @@
     <!-- 空状态 -->
     <div v-if="messages.length === 0" class="empty-state">
       <div class="empty-icon">✦</div>
-      <h2>$t('chat.empty')</h2>
+      <h2>{{ $t('chat.empty') }}</h2>
       <p>{{ selectedModel }}</p>
     </div>
 
@@ -64,7 +64,7 @@
         @focus="isFocused = true"
         @blur="isFocused = false"
         @input="autoResize"
-        placeholder="$t('chat.placeholder')"
+        :placeholder="$t('chat.placeholder')"
         rows="1"
         :disabled="isLoading"
         class="input-textarea"
@@ -75,7 +75,7 @@
         </svg>
       </button>
     </div>
-    <p class="disclaimer">$t('chat.disclaimer')</p>
+    <p class="disclaimer">{{ $t('chat.disclaimer') }}</p>
   </div>
 </template>
 

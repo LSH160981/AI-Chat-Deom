@@ -2,13 +2,13 @@
   <div class="gen-area">
     <div v-if="!audioUrl && !isLoading" class="empty-state">
       <div class="empty-icon">🔊</div>
-      <h2>$t('tts.empty')</h2>
-      <p>$t('tts.emptyHint')</p>
+      <h2>{{ $t('tts.empty') }}</h2>
+      <p>{{ $t('tts.emptyHint') }}</p>
     </div>
 
     <div v-if="isLoading" class="gen-loading">
       <div class="gen-spinner"></div>
-      <p>$t('tts.synthesizing')</p>
+      <p>{{ $t('tts.synthesizing') }}</p>
     </div>
 
     <div v-if="audioUrl" class="audio-player">
@@ -21,7 +21,7 @@
           v-model="inputValue"
           @focus="isFocused = true"
           @blur="isFocused = false"
-          placeholder="$t('tts.placeholder')"
+          :placeholder="$t('tts.placeholder')"
           rows="3"
           :disabled="isLoading"
           class="input-textarea"

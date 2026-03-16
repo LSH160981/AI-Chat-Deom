@@ -2,19 +2,19 @@
   <div class="gen-area">
     <div v-if="generatedImages.length === 0 && !isLoading" class="empty-state">
       <div class="empty-icon">🎨</div>
-      <h2>$t('image.empty')</h2>
-      <p>$t('image.emptyHint')</p>
+      <h2>{{ $t('image.empty') }}</h2>
+      <p>{{ $t('image.emptyHint') }}</p>
     </div>
 
     <div v-if="isLoading" class="gen-loading">
       <div class="gen-spinner"></div>
-      <p>$t('image.generating')</p>
+      <p>{{ $t('image.generating') }}</p>
     </div>
 
     <div v-if="generatedImages.length > 0" class="image-grid">
       <div v-for="(img, i) in generatedImages" :key="i" class="image-item">
         <img :src="img" @click="$emit('preview', img)" />
-        <a :href="img" download="ai-image.png" class="download-btn">$t('image.download')</a>
+        <a :href="img" download="ai-image.png" class="download-btn">{{ $t('image.download') }}</a>
       </div>
     </div>
 
@@ -25,7 +25,7 @@
           @keydown.enter.exact.prevent="$emit('generate')"
           @focus="isFocused = true"
           @blur="isFocused = false"
-          placeholder="$t('image.emptyHint')，例如：一只在咖啡馆读书的猫..."
+          :placeholder="$t('image.placeholder')"
           rows="2"
           :disabled="isLoading"
           class="input-textarea"

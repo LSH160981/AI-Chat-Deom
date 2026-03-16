@@ -2,13 +2,13 @@
   <div class="gen-area">
     <div v-if="!transcription && !isLoading" class="empty-state">
       <div class="empty-icon">🎙️</div>
-      <h2>$t('stt.empty')</h2>
-      <p>$t('stt.emptyHint')</p>
+      <h2>{{ $t('stt.empty') }}</h2>
+      <p>{{ $t('stt.emptyHint') }}</p>
     </div>
 
     <div v-if="isLoading" class="gen-loading">
       <div class="gen-spinner"></div>
-      <p>$t('stt.transcribing')</p>
+      <p>{{ $t('stt.transcribing') }}</p>
     </div>
 
     <div v-if="transcription" class="transcription-result">
@@ -27,7 +27,7 @@
       <div class="or-divider">或</div>
       <label class="upload-audio-btn">
         <input type="file" accept="audio/*" @change="$emit('upload', $event)" style="display:none" />
-        $t('stt.uploadAudio')
+        {{ $t('stt.uploadAudio') }}
       </label>
     </div>
   </div>
