@@ -103,10 +103,22 @@
         </select>
       </div>
     </template>
+
+    <!-- 设置入口 -->
+    <div class="sidebar-bottom">
+      <RouterLink to="/settings" class="settings-link" @click="$emit('close')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+        </svg>
+        设置
+      </RouterLink>
+    </div>
   </aside>
 </template>
 
 <script setup>
+import { RouterLink } from 'vue-router'
 import { MODEL_LIST, IMAGE_MODEL_LIST, TTS_VOICE_MAP, CHAT_MODES } from '@/config/models'
 
 defineProps({
@@ -130,3 +142,24 @@ defineEmits([
   'update:ttsVoice', 'update:ttsProvider', 'update:imageModel',
 ])
 </script>
+
+<style>
+.sidebar-bottom {
+  margin-top: auto;
+  padding: 12px 8px 0;
+  border-top: 1px solid #eee;
+}
+.settings-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-size: 14px;
+  color: #555;
+  transition: background 0.15s;
+}
+.settings-link:hover { background: #efefef; color: #1a1a1a; }
+.settings-link.router-link-active { background: #e8e8e8; color: #1a1a1a; font-weight: 600; }
+</style>
