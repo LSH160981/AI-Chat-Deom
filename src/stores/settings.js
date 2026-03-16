@@ -6,29 +6,30 @@ import { reactive, watch } from 'vue'
 const STORAGE_KEY = 'ai-chat-settings'
 
 const defaults = {
+  // API 连接
+  apiBaseUrl: '',           // 用户填写的 Base URL
+  apiKey: '',               // API Key
+  detectedModels: [],       // 检测到的模型列表 [{id, name, group}]
+
   // 对话
-  defaultModel: 'claude-sonnet-4-5',
+  defaultModel: '',
   systemPrompt: '',
   temperature: 0.7,
   webSearchEnabled: false,
-  contextLength: 20,         // 最大携带上下文条数
+  contextLength: 20,
 
   // TTS
   ttsEnabled: false,
-  ttsProvider: 'openai',
-  ttsVoice: 'nova',
+  ttsVoice: 'alloy',
 
   // 图片生成
-  imageModel: 'gpt-image-1-mini',
-  imageQuality: 'low',
+  imageSize: '1024x1024',
+  imageQuality: 'standard',
 
   // 外观
-  theme: 'light',            // light | dark | system
-  fontSize: 'md',            // sm | md | lg
+  theme: 'light',
+  fontSize: 'md',
   sendOnEnter: true,
-
-  // 关于
-  puterSdkUrl: 'https://js.puter.com/v2/',
 }
 
 function load() {
@@ -42,7 +43,6 @@ function load() {
 
 export const settings = reactive(load())
 
-// 自动持久化
 watch(settings, (val) => {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(val))
 }, { deep: true })

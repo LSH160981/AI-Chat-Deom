@@ -1,6 +1,7 @@
 <template>
   <div class="settings-page">
     <div class="settings-container">
+
       <!-- 页头 -->
       <div class="settings-header">
         <button class="back-btn" @click="$router.back()">
@@ -13,44 +14,99 @@
         <button class="reset-btn" @click="confirmReset">{{ $t('common.reset') }}</button>
       </div>
 
-      <!-- 语言 -->
+      <!-- API 连接 -->
       <section class="settings-section">
-        <h2 class="section-title"><span class="section-icon">🌐</span> {{ $t('settings.sectionLanguage') }}</h2>
-        <!-- 语言 -->
+        <h2 class="section-title"><span class="section-icon">🔌</span> API 连接</h2>
+
         <div class="setting-item col">
           <div class="setting-info">
-            <label>{{ $t('settings.language') }}</label>
-            <p>{{ $t('settings.languageHint') }}</p>
+            <label>Base URL</label>
+            <p>服务商地址，会自动补全路径（如 /v1）</p>
           </div>
-          <div class="lang-picker">
-            <button
-              v-for="lang in LANGUAGES"
-              :key="lang.code"
-              class="lang-btn"
-              :class="{ active: currentLocale === lang.code }"
-              @click="switchLang(lang.code)"
-            >
-              <span class="lang-flag">{{ lang.flag }}</span>
-              <span class="lang-name">{{ lang.label }}</span>
+          <div class="url-row">
+            <input
+              v-model="settings.apiBaseUrl"
+              class="s-input url-input"
+              placeholder="https://api.openai.com"
+              @blur="showNormalized"
+            />
+            <span v-if="normalizedUrl" class="url-hint">→ {{ normalizedUrl }}</span>
+          </div>
+        </div>
+
+        <div class="setting-item col">
+          <div class="setting-info">
+            <label>API Key</label>
+            <p>sk-... 或对应服务商的密钥</p>
+          </div>
+          <div class="key-row">
+            <input
+              v-model="settings.apiKey"
+              :type="showKey ? 'text' : 'password'"
+              class="s-input key-input"
+              placeholder="sk-..."
+              autocomplete="off"
+            />
+            <button class="eye-btn" @click="showKey = !showKey">
+              {{ showKey ? '🙈' : '👁️' }}
             </button>
+          </div>
+        </div>
+
+        <!-- 检测按钮 -->
+        <div class="setting-item">
+          <div class="setting-info">
+            <label>可用模型</label>
+            <p v-if="settings.detectedModels.length">已检测到 {{ settings.detectedModels.length }} 个模型</p>
+            <p v-else>点击检测获取模型列表</p>
+          </div>
+          <button class="detect-btn" :disabled="detecting || !settings.apiBaseUrl" @click="runDetect">
+            <span v-if="detecting" class="detect-spin"></span>
+            {{ detecting ? '检测中…' : '🔍 检测' }}
+          </button>
+        </div>
+
+        <!-- 检测错误 -->
+        <div v-if="detectError" class="detect-error">
+          <span>⚠️ {{ detectError }}</span>
+        </div>
+
+        <!-- 模型列表（分组折叠展示） -->
+        <div v-if="settings.detectedModels.length" class="model-list-preview">
+          <div
+            v-for="(group, gName) in groupedModels"
+            :key="gName"
+            class="model-group"
+          >
+            <div class="model-group-title" @click="toggleGroup(gName)">
+              <span>{{ gName }} <em>({{ group.length }})</em></span>
+              <span class="chevron">{{ openGroups[gName] ? '▲' : '▼' }}</span>
+            </div>
+            <div v-if="openGroups[gName]" class="model-group-items">
+              <div
+                v-for="m in group"
+                :key="m.id"
+                class="model-chip"
+                :class="{ selected: settings.defaultModel === m.id }"
+                @click="settings.defaultModel = m.id"
+              >
+                {{ m.name }}
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
-      <!-- 对话设置 -->
+      <!-- 默认模型（检测前用手动输入） -->
       <section class="settings-section">
         <h2 class="section-title"><span class="section-icon">💬</span> {{ $t('settings.sectionChat') }}</h2>
 
-        <div class="setting-item">
+        <div class="setting-item col">
           <div class="setting-info">
             <label>{{ $t('settings.defaultModel') }}</label>
-            <p>{{ $t('settings.defaultModelHint') }}</p>
+            <p>{{ settings.detectedModels.length ? '从上方列表点击选择，或手动输入' : '填写模型 ID，如 gpt-4o / claude-sonnet-4-5' }}</p>
           </div>
-          <select v-model="settings.defaultModel" class="s-select">
-            <optgroup v-for="group in MODEL_LIST" :key="group.label" :label="group.label">
-              <option v-for="opt in group.options" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
-            </optgroup>
-          </select>
+          <input v-model="settings.defaultModel" class="s-input" placeholder="gpt-4o" />
         </div>
 
         <div class="setting-item col">
@@ -79,17 +135,6 @@
 
         <div class="setting-item">
           <div class="setting-info">
-            <label>{{ $t('settings.webSearch') }}</label>
-            <p>{{ $t('settings.webSearchHint') }}</p>
-          </div>
-          <label class="s-toggle">
-            <input type="checkbox" v-model="settings.webSearchEnabled" />
-            <span class="s-toggle-track"></span>
-          </label>
-        </div>
-
-        <div class="setting-item">
-          <div class="setting-info">
             <label>{{ $t('settings.sendOnEnter') }}</label>
             <p>{{ $t('settings.sendOnEnterHint') }}</p>
           </div>
@@ -100,7 +145,7 @@
         </div>
       </section>
 
-      <!-- 语音设置 -->
+      <!-- 语音 TTS -->
       <section class="settings-section">
         <h2 class="section-title"><span class="section-icon">🔊</span> {{ $t('settings.sectionTTS') }}</h2>
 
@@ -115,34 +160,20 @@
           </label>
         </div>
 
-        <div class="setting-item">
+        <div class="setting-item col">
           <div class="setting-info">
-            <label>{{ $t('settings.ttsProvider') }}</label>
-            <p>{{ $t('settings.ttsProviderHint') }}</p>
+            <label>TTS 模型 ID</label>
+            <p>如 tts-1、tts-1-hd，留空使用默认</p>
           </div>
-          <select v-model="settings.ttsProvider" class="s-select">
-            <option value="openai">OpenAI</option>
-            <option value="aws-polly">AWS Polly</option>
-            <option value="elevenlabs">ElevenLabs</option>
-          </select>
+          <input v-model="settings.ttsModel" class="s-input" placeholder="tts-1" />
         </div>
 
-        <div class="setting-item">
+        <div class="setting-item col">
           <div class="setting-info">
             <label>{{ $t('settings.ttsVoice') }}</label>
-            <p>{{ $t('settings.ttsVoiceHint') }}</p>
+            <p>alloy / nova / echo / onyx / shimmer / coral</p>
           </div>
-          <select v-model="settings.ttsVoice" class="s-select">
-            <template v-if="settings.ttsProvider === 'openai'">
-              <option v-for="v in TTS_VOICE_MAP.openai" :key="v.value" :value="v.value">{{ v.label }}</option>
-            </template>
-            <template v-else-if="settings.ttsProvider === 'aws-polly'">
-              <option v-for="v in TTS_VOICE_MAP['aws-polly']" :key="v.value" :value="v.value">{{ v.label }}</option>
-            </template>
-            <template v-else>
-              <option v-for="v in TTS_VOICE_MAP.elevenlabs" :key="v.value" :value="v.value">{{ v.label }}</option>
-            </template>
-          </select>
+          <input v-model="settings.ttsVoice" class="s-input" placeholder="alloy" />
         </div>
       </section>
 
@@ -150,25 +181,34 @@
       <section class="settings-section">
         <h2 class="section-title"><span class="section-icon">🎨</span> {{ $t('settings.sectionImage') }}</h2>
 
+        <div class="setting-item col">
+          <div class="setting-info">
+            <label>图片模型 ID</label>
+            <p>如 dall-e-3、gpt-image-1，需服务商支持</p>
+          </div>
+          <input v-model="settings.imageModel" class="s-input" placeholder="dall-e-3" />
+        </div>
+
         <div class="setting-item">
           <div class="setting-info">
-            <label>{{ $t('settings.imageModel') }}</label>
-            <p>{{ $t('settings.imageModelHint') }}</p>
+            <label>尺寸</label>
           </div>
-          <select v-model="settings.imageModel" class="s-select">
-            <option v-for="m in IMAGE_MODEL_LIST" :key="m.value" :value="m.value">{{ m.label }}</option>
+          <select v-model="settings.imageSize" class="s-select">
+            <option value="256x256">256×256</option>
+            <option value="512x512">512×512</option>
+            <option value="1024x1024">1024×1024</option>
+            <option value="1792x1024">1792×1024</option>
+            <option value="1024x1792">1024×1792</option>
           </select>
         </div>
 
         <div class="setting-item">
           <div class="setting-info">
             <label>{{ $t('settings.imageQuality') }}</label>
-            <p>{{ $t('settings.imageQualityHint') }}</p>
           </div>
           <select v-model="settings.imageQuality" class="s-select">
-            <option value="low">{{ $t('settings.qualityLow') }}</option>
-            <option value="medium">{{ $t('settings.qualityMedium') }}</option>
-            <option value="high">{{ $t('settings.qualityHigh') }}</option>
+            <option value="standard">Standard</option>
+            <option value="hd">HD</option>
           </select>
         </div>
       </section>
@@ -180,7 +220,6 @@
         <div class="setting-item">
           <div class="setting-info">
             <label>{{ $t('settings.theme') }}</label>
-            <p>{{ $t('settings.themeHint') }}</p>
           </div>
           <div class="theme-picker">
             <button v-for="t in themes" :key="t.value" class="theme-btn" :class="{ active: settings.theme === t.value }" @click="settings.theme = t.value">
@@ -193,7 +232,6 @@
         <div class="setting-item">
           <div class="setting-info">
             <label>{{ $t('settings.fontSize') }}</label>
-            <p>{{ $t('settings.fontSizeHint') }}</p>
           </div>
           <div class="size-picker">
             <button v-for="s in fontSizes" :key="s.value" class="size-btn" :class="[s.cls, { active: settings.fontSize === s.value }]" @click="settings.fontSize = s.value">A</button>
@@ -201,18 +239,22 @@
         </div>
       </section>
 
-      <!-- 高级 -->
+      <!-- 语言 -->
+      <section class="settings-section">
+        <h2 class="section-title"><span class="section-icon">🌐</span> {{ $t('settings.sectionLanguage') }}</h2>
+        <div class="setting-item col">
+          <div class="lang-picker">
+            <button v-for="lang in LANGUAGES" :key="lang.code" class="lang-btn" :class="{ active: currentLocale === lang.code }" @click="switchLang(lang.code)">
+              <span class="lang-flag">{{ lang.flag }}</span>
+              <span class="lang-name">{{ lang.label }}</span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- 危险区 -->
       <section class="settings-section">
         <h2 class="section-title"><span class="section-icon">⚙️</span> {{ $t('settings.sectionAdvanced') }}</h2>
-
-        <div class="setting-item">
-          <div class="setting-info">
-            <label>{{ $t('settings.sdkUrl') }}</label>
-            <p>{{ $t('settings.sdkUrlHint') }}</p>
-          </div>
-          <input v-model="settings.puterSdkUrl" class="s-input" placeholder="https://js.puter.com/v2/" />
-        </div>
-
         <div class="setting-item">
           <div class="setting-info">
             <label class="danger-label">{{ $t('settings.clearData') }}</label>
@@ -232,8 +274,6 @@
             <p>{{ $t('settings.aboutDesc') }}</p>
             <p class="about-links">
               <a href="https://github.com/LSH160981/AI-Chat-Deom" target="_blank">GitHub</a>
-              <span>·</span>
-              <a href="https://docs.puter.com/AI/chat/" target="_blank">Puter.ai Docs</a>
             </p>
           </div>
         </div>
@@ -250,18 +290,20 @@
 </template>
 
 <script setup>
-import { computed, onMounted, onUnmounted } from 'vue'
+import { computed, ref, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { settings, resetSettings } from '@/stores/settings'
-import { MODEL_LIST, IMAGE_MODEL_LIST, TTS_VOICE_MAP } from '@/config/models'
 import { LANGUAGES } from '@/i18n'
 import { useModal } from '@/composables/useModal'
+import { useModelDetector } from '@/composables/useModelDetector'
+import { normalizeBaseUrl } from '@/composables/useApiClient'
 
 const { t, locale } = useI18n()
 const currentLocale = computed(() => locale.value)
 const { confirm } = useModal()
+const { detect, detecting, error: detectError } = useModelDetector()
 
-// 设置页需要可滚动，临时解除 body overflow: hidden
+// 设置页滚动解锁
 onMounted(() => {
   document.documentElement.style.overflow = 'auto'
   document.body.style.overflow = 'auto'
@@ -271,15 +313,54 @@ onUnmounted(() => {
   document.body.style.overflow = 'hidden'
 })
 
+// URL 补全预览
+const normalizedUrl = ref('')
+const showNormalized = () => {
+  const n = normalizeBaseUrl(settings.apiBaseUrl)
+  normalizedUrl.value = (n && n !== settings.apiBaseUrl) ? n : ''
+}
+
+// API Key 显隐
+const showKey = ref(false)
+
+// 模型检测
+const openGroups = ref({})
+const groupedModels = computed(() => {
+  const map = {}
+  for (const m of settings.detectedModels) {
+    if (!map[m.group]) map[m.group] = []
+    map[m.group].push(m)
+  }
+  return map
+})
+const toggleGroup = (name) => {
+  openGroups.value[name] = !openGroups.value[name]
+}
+
+const runDetect = async () => {
+  const models = await detect(settings.apiBaseUrl, settings.apiKey)
+  if (models.length) {
+    settings.detectedModels = models
+    // 默认展开第一组
+    const first = models[0]?.group
+    if (first) openGroups.value[first] = true
+    // 如果当前没选模型，自动选第一个
+    if (!settings.defaultModel && models[0]) {
+      settings.defaultModel = models[0].id
+    }
+  }
+}
+
+// 语言切换
 const switchLang = (code) => {
   locale.value = code
   localStorage.setItem('ai-chat-lang', code)
 }
 
 const themes = [
-  { value: 'light', labelKey: 'settings.themeLight', style: 'background:#fff;border:1px solid #ddd;' },
-  { value: 'dark',  labelKey: 'settings.themeDark',  style: 'background:#1a1a1a;' },
-  { value: 'system',labelKey: 'settings.themeSystem', style: 'background:linear-gradient(135deg,#fff 50%,#1a1a1a 50%);border:1px solid #ddd;' },
+  { value: 'light',  labelKey: 'settings.themeLight',  style: 'background:#fff;border:1px solid #ddd;' },
+  { value: 'dark',   labelKey: 'settings.themeDark',   style: 'background:#1a1a1a;' },
+  { value: 'system', labelKey: 'settings.themeSystem', style: 'background:linear-gradient(135deg,#fff 50%,#1a1a1a 50%);border:1px solid #ddd;' },
 ]
 
 const fontSizes = [
@@ -289,27 +370,13 @@ const fontSizes = [
 ]
 
 const confirmReset = async () => {
-  const ok = await confirm({
-    icon: '🔄',
-    title: t('common.reset'),
-    message: t('settings.resetConfirm'),
-    type: 'warning',
-  })
+  const ok = await confirm({ icon: '🔄', title: t('common.reset'), message: t('settings.resetConfirm'), type: 'warning' })
   if (ok) resetSettings()
 }
 
 const clearData = async () => {
-  const ok = await confirm({
-    icon: '🗑️',
-    title: t('settings.clearData'),
-    message: t('settings.clearConfirm'),
-    type: 'danger',
-    confirmText: t('settings.clearDataBtn'),
-  })
-  if (ok) {
-    localStorage.clear()
-    location.reload()
-  }
+  const ok = await confirm({ icon: '🗑️', title: t('settings.clearData'), message: t('settings.clearConfirm'), type: 'danger', confirmText: t('settings.clearDataBtn') })
+  if (ok) { localStorage.clear(); location.reload() }
 }
 </script>
 
@@ -324,21 +391,8 @@ const clearData = async () => {
 .reset-btn { padding: 6px 12px; border: 1px solid var(--card-border); border-radius: 8px; background: var(--card-bg); font-size: 13px; color: var(--text-muted); cursor: pointer; }
 .reset-btn:hover { color: var(--danger); border-color: var(--danger); }
 
-.settings-section {
-  background: var(--card-bg);
-  border-radius: 14px;
-  overflow: hidden;
-  margin-bottom: 14px;
-  border: 1px solid var(--card-border);
-  box-shadow: 0 1px 3px rgba(0,0,0,0.12);
-}
-.section-title {
-  font-size: 12px; font-weight: 600; color: var(--text-muted);
-  padding: 11px 16px 9px; border-bottom: 1px solid var(--border-subtle);
-  display: flex; align-items: center; gap: 6px;
-  background: var(--bg-secondary);
-  letter-spacing: 0.3px; text-transform: uppercase;
-}
+.settings-section { background: var(--card-bg); border-radius: 14px; overflow: hidden; margin-bottom: 14px; border: 1px solid var(--card-border); box-shadow: 0 1px 3px rgba(0,0,0,0.12); }
+.section-title { font-size: 12px; font-weight: 600; color: var(--text-muted); padding: 11px 16px 9px; border-bottom: 1px solid var(--border-subtle); display: flex; align-items: center; gap: 6px; background: var(--bg-secondary); letter-spacing: 0.3px; text-transform: uppercase; }
 .section-icon { font-size: 14px; }
 
 .setting-item { display: flex; align-items: center; gap: 16px; padding: 13px 16px; border-bottom: 1px solid var(--border-subtle); }
@@ -350,31 +404,42 @@ const clearData = async () => {
 .danger-label { color: var(--danger) !important; }
 .value-badge { font-size: 11px; font-weight: 600; color: var(--text-secondary); background: var(--hover-bg); padding: 1px 7px; border-radius: 20px; border: 1px solid var(--border); }
 
-.s-select {
-  min-width: 150px; padding: 7px 32px 7px 10px;
-  border: 1px solid var(--input-border); border-radius: 8px;
-  font-size: 13px; background: var(--input-bg); color: var(--text);
-  outline: none; cursor: pointer;
-  appearance: none; -webkit-appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 10px center;
-}
+/* URL 行 */
+.url-row { display: flex; flex-direction: column; gap: 4px; margin-top: 8px; }
+.url-input { width: 100%; }
+.url-hint { font-size: 11px; color: var(--text-muted); font-family: monospace; padding: 2px 4px; }
+
+/* Key 行 */
+.key-row { display: flex; gap: 8px; margin-top: 8px; align-items: center; }
+.key-input { flex: 1; }
+.eye-btn { padding: 6px 10px; border: 1px solid var(--input-border); border-radius: 8px; background: var(--input-bg); cursor: pointer; font-size: 14px; flex-shrink: 0; }
+
+/* 检测按钮 */
+.detect-btn { display: flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 8px; border: 1.5px solid var(--text); background: var(--card-bg); color: var(--text); font-size: 13px; font-weight: 500; cursor: pointer; flex-shrink: 0; transition: background 0.15s; }
+.detect-btn:hover:not(:disabled) { background: var(--hover-bg); }
+.detect-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.detect-spin { width: 12px; height: 12px; border: 2px solid var(--border); border-top-color: var(--text); border-radius: 50%; animation: spin 0.7s linear infinite; flex-shrink: 0; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* 检测错误 */
+.detect-error { padding: 10px 16px; background: rgba(248,113,113,0.1); border-top: 1px solid var(--border-subtle); font-size: 13px; color: var(--danger); }
+
+/* 模型列表 */
+.model-list-preview { padding: 8px 16px 12px; border-top: 1px solid var(--border-subtle); }
+.model-group { margin-bottom: 8px; }
+.model-group-title { display: flex; justify-content: space-between; align-items: center; font-size: 12px; font-weight: 600; color: var(--text-secondary); padding: 6px 8px; background: var(--hover-bg); border-radius: 6px; cursor: pointer; user-select: none; }
+.model-group-title em { font-style: normal; font-weight: 400; color: var(--text-muted); }
+.chevron { font-size: 10px; }
+.model-group-items { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 4px 0; }
+.model-chip { padding: 4px 10px; border: 1px solid var(--input-border); border-radius: 20px; font-size: 12px; color: var(--text-secondary); cursor: pointer; transition: all 0.15s; background: var(--card-bg); }
+.model-chip:hover { border-color: var(--text-secondary); color: var(--text); }
+.model-chip.selected { border-color: #60a5fa; color: #60a5fa; background: rgba(96,165,250,0.1); font-weight: 600; }
+
+.s-select { min-width: 150px; padding: 7px 32px 7px 10px; border: 1px solid var(--input-border); border-radius: 8px; font-size: 13px; background: var(--input-bg); color: var(--text); outline: none; cursor: pointer; appearance: none; -webkit-appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; }
 .s-select:focus { border-color: var(--text-secondary); }
-.s-input {
-  min-width: 200px; padding: 7px 10px;
-  border: 1px solid var(--input-border); border-radius: 8px;
-  font-size: 13px; color: var(--text); background: var(--input-bg);
-  outline: none; font-family: monospace;
-}
+.s-input { width: 100%; padding: 7px 10px; border: 1px solid var(--input-border); border-radius: 8px; font-size: 13px; color: var(--text); background: var(--input-bg); outline: none; }
 .s-input:focus { border-color: var(--text-secondary); }
-.s-textarea {
-  width: 100%; padding: 8px 10px;
-  border: 1px solid var(--input-border); border-radius: 8px;
-  font-size: 13px; font-family: inherit; resize: vertical;
-  color: var(--text); background: var(--input-bg);
-  outline: none; margin-top: 8px; line-height: 1.5;
-}
+.s-textarea { width: 100%; padding: 8px 10px; border: 1px solid var(--input-border); border-radius: 8px; font-size: 13px; font-family: inherit; resize: vertical; color: var(--text); background: var(--input-bg); outline: none; margin-top: 8px; line-height: 1.5; }
 .s-textarea:focus { border-color: var(--text-secondary); }
 .s-range { width: 160px; accent-color: var(--text); }
 
@@ -385,51 +450,28 @@ const clearData = async () => {
 .s-toggle input:checked + .s-toggle-track { background: #4ade80; border-color: #4ade80; }
 .s-toggle input:checked + .s-toggle-track::before { transform: translateX(20px); }
 
-/* 语言选择 */
-.lang-picker { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 10px; }
-.lang-btn {
-  display: flex; align-items: center; gap: 8px;
-  padding: 10px 14px; border: 1.5px solid var(--input-border);
-  border-radius: 10px; background: var(--input-bg);
-  font-size: 14px; color: var(--text-secondary);
-  cursor: pointer; transition: all 0.15s; width: 100%;
-}
+.lang-picker { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 4px; }
+.lang-btn { display: flex; align-items: center; gap: 8px; padding: 10px 14px; border: 1.5px solid var(--input-border); border-radius: 10px; background: var(--input-bg); font-size: 14px; color: var(--text-secondary); cursor: pointer; transition: all 0.15s; width: 100%; }
 .lang-btn:hover { border-color: var(--text-secondary); color: var(--text); background: var(--hover-bg); }
 .lang-btn.active { border-color: #60a5fa; color: var(--text); font-weight: 600; background: rgba(96,165,250,0.1); }
 .lang-flag { font-size: 18px; flex-shrink: 0; }
 .lang-name { font-size: 13px; }
 
-/* 主题选择 */
 .theme-picker { display: flex; gap: 8px; flex-wrap: wrap; }
-.theme-btn {
-  display: flex; flex-direction: column; align-items: center; gap: 5px;
-  padding: 8px 12px; border: 1.5px solid var(--input-border);
-  border-radius: 10px; background: var(--input-bg);
-  font-size: 12px; color: var(--text-secondary); cursor: pointer;
-  transition: all 0.15s;
-}
+.theme-btn { display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 8px 12px; border: 1.5px solid var(--input-border); border-radius: 10px; background: var(--input-bg); font-size: 12px; color: var(--text-secondary); cursor: pointer; transition: all 0.15s; }
 .theme-btn:hover { border-color: var(--text-secondary); color: var(--text); }
 .theme-btn.active { border-color: #60a5fa; color: var(--text); font-weight: 600; background: rgba(96,165,250,0.1); }
 .theme-preview { width: 28px; height: 18px; border-radius: 4px; }
 
-/* 字号 */
 .size-picker { display: flex; gap: 6px; }
-.size-btn {
-  width: 38px; height: 38px; border: 1.5px solid var(--input-border);
-  border-radius: 8px; background: var(--input-bg); cursor: pointer;
-  color: var(--text-secondary); font-weight: 600; transition: all 0.15s;
-}
+.size-btn { width: 38px; height: 38px; border: 1.5px solid var(--input-border); border-radius: 8px; background: var(--input-bg); cursor: pointer; color: var(--text-secondary); font-weight: 600; transition: all 0.15s; }
 .size-btn:hover { border-color: var(--text-secondary); color: var(--text); }
 .size-btn.active { border-color: #60a5fa; color: var(--text); background: rgba(96,165,250,0.1); }
-.fs-sm { font-size: 12px; }
-.fs-md { font-size: 15px; }
-.fs-lg { font-size: 18px; }
+.fs-sm { font-size: 12px; } .fs-md { font-size: 15px; } .fs-lg { font-size: 18px; }
 
-/* 危险区 */
 .danger-btn { padding: 7px 14px; border: 1px solid var(--danger); border-radius: 8px; background: transparent; color: var(--danger); font-size: 13px; cursor: pointer; transition: all 0.15s; }
 .danger-btn:hover { background: var(--danger); color: #fff; }
 
-/* 关于 */
 .about-card { display: flex; align-items: center; gap: 16px; padding: 16px; }
 .about-logo { width: 48px; height: 48px; background: var(--hover-bg); border: 1px solid var(--border); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; }
 .about-info h3 { font-size: 16px; font-weight: 600; margin-bottom: 4px; color: var(--text); }
@@ -437,7 +479,6 @@ const clearData = async () => {
 .about-links { margin-top: 6px !important; display: flex; gap: 8px; align-items: center; }
 .about-links a { color: #60a5fa; text-decoration: none; font-size: 13px; }
 .about-links a:hover { text-decoration: underline; }
-.about-links span { color: var(--border); }
 
 .save-notice { display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 12px; color: var(--text-muted); margin-top: 8px; }
 </style>

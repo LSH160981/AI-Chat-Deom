@@ -27,6 +27,14 @@
         </button>
       </header>
 
+      <!-- 未配置 API 时的引导提示 -->
+      <div v-if="!settings.apiBaseUrl" class="no-api-banner">
+        <div class="no-api-inner">
+          <span>⚙️</span>
+          <span>请先在<router-link to="/settings">设置</router-link>中填写 API 地址和密钥</span>
+        </div>
+      </div>
+
       <ChatView
         v-if="currentMode === 'chat'"
         ref="chatViewRef"
@@ -68,7 +76,7 @@
         :audioUrl="audioUrl"
         :isLoading="isLoading"
         v-model="userInput"
-        @synthesize="synthesizeSpeech"
+        @synthesize="doSynthesize"
       />
     </main>
 
@@ -86,21 +94,20 @@ import ChatView from './views/ChatView.vue'
 import ImageGenView from './views/ImageGenView.vue'
 import SpeechToTextView from './views/SpeechToTextView.vue'
 import TextToSpeechView from './views/TextToSpeechView.vue'
-import { usePuter } from '@/composables/usePuter'
 import { useRecorder } from '@/composables/useRecorder'
 import { useModal } from '@/composables/useModal'
+import { chatStream, generateImage as apiGenerateImage, transcribeAudio, synthesizeSpeech } from '@/composables/useApiClient'
 import { CHAT_MODES } from '@/config/models'
 import { settings } from '@/stores/settings'
 
 const { t } = useI18n()
-const { puter: getPuter } = usePuter()
 const { alert } = useModal()
 
-// ===== 当前会话状态（不持久化）=====
+// ===== 会话状态 =====
 const currentMode = ref('chat')
 const sidebarOpen = ref(false)
-const selectedModel = ref(settings.defaultModel)   // 初始值来自设置
-const sessionSystemPrompt = ref(settings.systemPrompt) // 会话级可覆盖
+const selectedModel = ref(settings.defaultModel || '')
+const sessionSystemPrompt = ref(settings.systemPrompt)
 
 const messages = ref([])
 const userInput = ref('')
@@ -113,6 +120,7 @@ const speakingIdx = ref(-1)
 const lightboxSrc = ref(null)
 const chatViewRef = ref(null)
 let currentAudio = null
+let abortController = null
 
 const { isRecording, startRecording, stopRecording } = useRecorder()
 
@@ -122,6 +130,7 @@ const newChat = () => {
   messages.value = []
   userInput.value = ''
   attachedImage.value = null
+  abortController?.abort()
 }
 
 const handleImageUpload = (e) => {
@@ -134,63 +143,55 @@ const handleImageUpload = (e) => {
 
 // ===== Chat =====
 const sendMessage = async () => {
-  const puter = getPuter()
-  if (!userInput.value.trim() || isLoading.value || !puter) return
   const text = userInput.value.trim()
-  const img = attachedImage.value
+  if (!text || isLoading.value) return
+
   userInput.value = ''
   attachedImage.value = null
   chatViewRef.value?.resetInputHeight()
 
-  messages.value.push({ role: 'user', content: text, image: img })
+  const userMsg = { role: 'user', content: text, image: attachedImage.value }
+  messages.value.push(userMsg)
   isLoading.value = true
   chatViewRef.value?.scrollToBottom()
 
+  // 构建历史
+  const history = []
+  const sysPrompt = sessionSystemPrompt.value || settings.systemPrompt
+  if (sysPrompt) history.push({ role: 'system', content: sysPrompt })
+
+  const ctxMsgs = messages.value.slice(0, -1).slice(-settings.contextLength)
+  for (const m of ctxMsgs) history.push({ role: m.role, content: m.content })
+  history.push({ role: 'user', content: text })
+
+  messages.value.push({ role: 'assistant', content: '' })
+  abortController = new AbortController()
+
   try {
-    const history = []
-    const sysPrompt = sessionSystemPrompt.value || settings.systemPrompt
-    if (sysPrompt) history.push({ role: 'system', content: sysPrompt })
-
-    // 携带上下文（受 settings.contextLength 限制）
-    const contextMsgs = messages.value.slice(0, -1).slice(-settings.contextLength)
-    for (const m of contextMsgs) {
-      history.push({ role: m.role, content: m.content })
-    }
-
-    const opts = {
-      model: selectedModel.value,
-      stream: true,
+    await chatStream({
+      messages: history,
+      model: selectedModel.value || settings.defaultModel,
       temperature: settings.temperature,
-    }
-    if (settings.webSearchEnabled) opts.tools = [{ type: 'web_search' }]
-
-    let response
-    if (img) {
-      response = await puter.ai.chat(text, img, false, opts)
-    } else {
-      history.push({ role: 'user', content: text })
-      response = await puter.ai.chat(history, false, opts)
-    }
-
-    messages.value.push({ role: 'assistant', content: '' })
-    let full = ''
-    for await (const part of response) {
-      if (part?.text) {
-        full += part.text
-        messages.value[messages.value.length - 1].content = full
+      signal: abortController.signal,
+      onChunk: (chunk) => {
+        messages.value[messages.value.length - 1].content += chunk
         chatViewRef.value?.scrollToBottom()
-      }
-    }
+      },
+    })
 
-    if (settings.ttsEnabled && full) {
-      const audio = await puter.ai.txt2speech(full.slice(0, 500), {
-        provider: settings.ttsProvider,
-        voice: settings.ttsVoice,
-      })
-      audio.play()
+    // 自动 TTS
+    if (settings.ttsEnabled) {
+      const full = messages.value[messages.value.length - 1].content
+      try {
+        const url = await synthesizeSpeech({ text: full.slice(0, 500), voice: settings.ttsVoice, model: settings.ttsModel || 'tts-1' })
+        const audio = new Audio(url)
+        audio.play()
+      } catch { /* TTS 失败不影响主流程 */ }
     }
   } catch (e) {
-    messages.value.push({ role: 'assistant', content: t('chat.error', { msg: e.message || e }) })
+    if (e.name !== 'AbortError') {
+      messages.value[messages.value.length - 1].content = `❌ ${e.message}`
+    }
   } finally {
     isLoading.value = false
     chatViewRef.value?.scrollToBottom()
@@ -199,22 +200,18 @@ const sendMessage = async () => {
 }
 
 const speakText = async (text, idx) => {
-  const puter = getPuter()
-  if (!puter) return
   if (speakingIdx.value === idx) {
-    if (currentAudio) { currentAudio.pause(); currentAudio = null }
+    currentAudio?.pause()
+    currentAudio = null
     speakingIdx.value = -1
     return
   }
   speakingIdx.value = idx
   try {
-    const audio = await puter.ai.txt2speech(text.slice(0, 500), {
-      provider: settings.ttsProvider,
-      voice: settings.ttsVoice,
-    })
-    currentAudio = audio
-    audio.play()
-    audio.onended = () => { speakingIdx.value = -1; currentAudio = null }
+    const url = await synthesizeSpeech({ text: text.slice(0, 500), voice: settings.ttsVoice, model: settings.ttsModel || 'tts-1' })
+    currentAudio = new Audio(url)
+    currentAudio.play()
+    currentAudio.onended = () => { speakingIdx.value = -1; currentAudio = null }
   } catch { speakingIdx.value = -1 }
 }
 
@@ -223,11 +220,9 @@ const toggleRecording = async () => {
   if (isRecording.value) { stopRecording(); return }
   try {
     await startRecording(async (blob) => {
-      const puter = getPuter()
-      if (!puter) return
       try {
-        const result = await puter.ai.speech2txt(blob)
-        userInput.value += (userInput.value ? ' ' : '') + (typeof result === 'string' ? result : result.text || '')
+        const text = await transcribeAudio(blob)
+        userInput.value += (userInput.value ? ' ' : '') + text
       } catch (e) { console.error(e) }
     })
   } catch {
@@ -237,41 +232,37 @@ const toggleRecording = async () => {
 
 // ===== 文生图 =====
 const generateImage = async () => {
-  const puter = getPuter()
-  if (!userInput.value.trim() || isLoading.value || !puter) return
   const prompt = userInput.value.trim()
+  if (!prompt || isLoading.value) return
   userInput.value = ''
   isLoading.value = true
   generatedImages.value = []
   try {
-    const img = await puter.ai.txt2img(prompt, {
-      model: settings.imageModel,
-      quality: settings.imageQuality,
+    const url = await apiGenerateImage({
+      prompt,
+      model: settings.imageModel || 'dall-e-3',
+      size: settings.imageSize || '1024x1024',
+      quality: settings.imageQuality || 'standard',
     })
-    generatedImages.value = [img.src]
+    generatedImages.value = [url]
   } catch (e) {
-    await alert({ icon: '⚠️', title: t('image.failed', { msg: e.message || e }), showCancel: false })
+    await alert({ icon: '⚠️', title: `生成失败：${e.message}`, showCancel: false })
   } finally {
     isLoading.value = false
   }
 }
 
-// ===== 语音转文字 =====
+// ===== STT 独立页 =====
 const toggleSTTRecording = async () => {
   if (isRecording.value) { stopRecording(); return }
   try {
     await startRecording(async (blob) => {
-      const puter = getPuter()
-      if (!puter) return
       isLoading.value = true
       try {
-        const result = await puter.ai.speech2txt(blob)
-        transcription.value = typeof result === 'string' ? result : result.text || JSON.stringify(result)
+        transcription.value = await transcribeAudio(blob)
       } catch (e) {
-        await alert({ icon: '⚠️', title: t('stt.failed', { msg: e.message }), showCancel: false })
-      } finally {
-        isLoading.value = false
-      }
+        await alert({ icon: '⚠️', title: `转写失败：${e.message}`, showCancel: false })
+      } finally { isLoading.value = false }
     })
   } catch {
     await alert({ icon: '🎙️', title: t('stt.micDenied'), showCancel: false })
@@ -279,39 +270,28 @@ const toggleSTTRecording = async () => {
 }
 
 const handleAudioUpload = async (e) => {
-  const puter = getPuter()
   const file = e.target.files[0]
-  if (!file || !puter) return
+  if (!file) return
   isLoading.value = true
   transcription.value = ''
   try {
-    const result = await puter.ai.speech2txt(file)
-    transcription.value = typeof result === 'string' ? result : result.text || JSON.stringify(result)
+    transcription.value = await transcribeAudio(file)
   } catch (err) {
-    await alert({ icon: '⚠️', title: t('stt.failed', { msg: err.message }), showCancel: false })
-  } finally {
-    isLoading.value = false
-  }
+    await alert({ icon: '⚠️', title: `转写失败：${err.message}`, showCancel: false })
+  } finally { isLoading.value = false }
 }
 
-// ===== 文字转语音 =====
-const synthesizeSpeech = async () => {
-  const puter = getPuter()
-  if (!userInput.value.trim() || isLoading.value || !puter) return
+// ===== TTS 独立页 =====
+const doSynthesize = async () => {
   const text = userInput.value.trim()
+  if (!text || isLoading.value) return
   isLoading.value = true
   audioUrl.value = null
   try {
-    const audio = await puter.ai.txt2speech(text, {
-      provider: settings.ttsProvider,
-      voice: settings.ttsVoice,
-    })
-    audioUrl.value = audio.src
+    audioUrl.value = await synthesizeSpeech({ text, voice: settings.ttsVoice, model: settings.ttsModel || 'tts-1' })
   } catch (e) {
-    await alert({ icon: '⚠️', title: t('tts.failed', { msg: e.message }), showCancel: false })
-  } finally {
-    isLoading.value = false
-  }
+    await alert({ icon: '⚠️', title: `合成失败：${e.message}`, showCancel: false })
+  } finally { isLoading.value = false }
 }
 </script>
 
@@ -319,4 +299,9 @@ const synthesizeSpeech = async () => {
 @import 'highlight.js/styles/github-dark.css';
 @import 'katex/dist/katex.min.css';
 @import '@/styles/app.css';
+
+.no-api-banner { background: rgba(96,165,250,0.1); border-bottom: 1px solid rgba(96,165,250,0.3); padding: 8px 20px; }
+.no-api-inner { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-secondary); max-width: 760px; margin: 0 auto; }
+.no-api-inner a { color: #60a5fa; text-decoration: none; font-weight: 500; }
+.no-api-inner a:hover { text-decoration: underline; }
 </style>

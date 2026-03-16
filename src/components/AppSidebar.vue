@@ -25,14 +25,29 @@
 
     <div class="sidebar-divider"></div>
 
-    <!-- 当前会话：仅保留快速调整项 -->
+    <!-- 当前会话：模型选择 -->
     <div class="sidebar-section">
       <p class="section-label">{{ $t('settings.defaultModel') }}</p>
-      <select :value="selectedModel" @change="$emit('update:selectedModel', $event.target.value)" class="model-select">
-        <optgroup v-for="group in MODEL_LIST" :key="group.label" :label="group.label">
-          <option v-for="opt in group.options" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+      <!-- 有检测到的模型：下拉 -->
+      <select
+        v-if="detectedModels.length"
+        :value="selectedModel"
+        @change="$emit('update:selectedModel', $event.target.value)"
+        class="model-select"
+      >
+        <optgroup v-for="(group, gName) in groupedModels" :key="gName" :label="gName">
+          <option v-for="m in group" :key="m.id" :value="m.id">{{ m.name }}</option>
         </optgroup>
       </select>
+      <!-- 没有检测：手动输入 -->
+      <input
+        v-else
+        :value="selectedModel"
+        @input="$emit('update:selectedModel', $event.target.value)"
+        class="system-prompt-input"
+        placeholder="gpt-4o / claude-sonnet-4-5 …"
+        style="font-family:monospace;font-size:12px;"
+      />
     </div>
 
     <div v-if="currentMode === 'chat'" class="sidebar-section">
@@ -60,9 +75,10 @@
 </template>
 
 <script setup>
+import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
-import { MODEL_LIST } from '@/config/models'
 import { CHAT_MODES } from '@/config/models'
+import { settings } from '@/stores/settings'
 
 defineProps({
   open: Boolean,
@@ -77,13 +93,23 @@ defineEmits([
   'update:selectedModel',
   'update:systemPrompt',
 ])
+
+const detectedModels = computed(() => settings.detectedModels || [])
+const groupedModels = computed(() => {
+  const map = {}
+  for (const m of detectedModels.value) {
+    if (!map[m.group]) map[m.group] = []
+    map[m.group].push(m)
+  }
+  return map
+})
 </script>
 
 <style>
 .sidebar-bottom {
   margin-top: auto;
   padding: 12px 8px 0;
-  border-top: 1px solid #eee;
+  border-top: 1px solid var(--border);
 }
 .settings-link {
   display: flex;
@@ -93,9 +119,9 @@ defineEmits([
   border-radius: 8px;
   text-decoration: none;
   font-size: 14px;
-  color: #555;
-  transition: background 0.15s;
+  color: var(--text-secondary);
+  transition: background 0.15s, color 0.15s;
 }
-.settings-link:hover { background: #efefef; color: #1a1a1a; }
-.settings-link.router-link-active { background: #e8e8e8; color: #1a1a1a; font-weight: 600; }
+.settings-link:hover { background: var(--hover-bg); color: var(--text); }
+.settings-link.router-link-active { background: var(--active-bg); color: var(--text); font-weight: 600; }
 </style>
