@@ -114,9 +114,7 @@
 
 <script setup>
 import { ref, computed } from 'vue'
-import { useI18n } from 'vue-i18n'
 import AppSidebar from './AppSidebar.vue'
-import AppIcon from '@/components/AppIcons.vue'
 import ChatView from './views/ChatView.vue'
 import ImageGenView from './views/ImageGenView.vue'
 import SpeechToTextView from './views/SpeechToTextView.vue'

@@ -130,7 +130,6 @@
 
 <script setup>
 import { ref, watch, nextTick } from 'vue'
-import AppIcon from '@/components/AppIcons.vue'
 import { useMarkdown } from '@/composables/useMarkdown'
 
 /**

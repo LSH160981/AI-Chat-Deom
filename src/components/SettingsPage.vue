@@ -383,7 +383,6 @@
  *  9. 危险操作（清除本地数据）
  */
 import { computed, ref, onMounted, onUnmounted } from 'vue'
-import { useI18n } from 'vue-i18n'
 import { settings, resetSettings } from '@/stores/settings'
 import { LANGUAGES } from '@/i18n'
 import { useModal } from '@/composables/useModal'
