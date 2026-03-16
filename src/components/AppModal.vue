@@ -46,7 +46,7 @@ const onCancel = () => {
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.4);
+  background: rgba(0, 0, 0, 0.5);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -56,18 +56,19 @@ const onCancel = () => {
 }
 
 .modal-box {
-  background: #fff;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
   border-radius: 16px;
   padding: 24px;
   max-width: 360px;
   width: 100%;
-  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.18);
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.3);
   text-align: center;
 }
 
 .modal-icon { font-size: 36px; margin-bottom: 12px; }
-.modal-title { font-size: 17px; font-weight: 700; color: #1a1a1a; margin-bottom: 8px; }
-.modal-message { font-size: 14px; color: #666; line-height: 1.6; margin-bottom: 20px; }
+.modal-title { font-size: 17px; font-weight: 700; color: var(--text); margin-bottom: 8px; }
+.modal-message { font-size: 14px; color: var(--text-secondary); line-height: 1.6; margin-bottom: 20px; }
 
 .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
 .modal-actions.single { justify-content: center; }
@@ -82,14 +83,13 @@ const onCancel = () => {
   border: none;
   transition: background 0.15s;
 }
-.modal-btn.cancel { background: #f0f0f0; color: #555; }
-.modal-btn.cancel:hover { background: #e5e5e5; }
-.modal-btn.confirm { background: #1a1a1a; color: #fff; }
-.modal-btn.confirm:hover { background: #333; }
-.modal-btn.confirm.danger { background: #e53e3e; }
+.modal-btn.cancel { background: var(--hover-bg); color: var(--text-secondary); }
+.modal-btn.cancel:hover { background: var(--active-bg); }
+.modal-btn.confirm { background: var(--text); color: var(--bg); }
+.modal-btn.confirm:hover { opacity: 0.85; }
+.modal-btn.confirm.danger { background: #e53e3e; color: #fff; }
 .modal-btn.confirm.danger:hover { background: #c53030; }
 
-/* 动画 */
 .modal-enter-active, .modal-leave-active { transition: opacity 0.2s, transform 0.2s; }
 .modal-enter-from, .modal-leave-to { opacity: 0; }
 .modal-enter-from .modal-box, .modal-leave-to .modal-box { transform: scale(0.92); }
