@@ -22,8 +22,7 @@
     <div v-if="messages.length === 0" class="empty-state">
       <div class="empty-icon">✦</div>
       <h2>{{ $t('chat.empty') }}</h2>
-      <!-- 显示当前选中的模型名 -->
-      <p>{{ selectedModel }}</p>
+      <!-- 空状态下不显示模型名（避免无意义信息/渲染告警） -->
     </div>
 
     <!-- 消息列表：遍历 messages 渲染每条消息 -->
