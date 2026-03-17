@@ -138,7 +138,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import AppSidebar from '@/components/layout/AppSidebar.vue'
 import ChatView from '@/components/chat/ChatView.vue'
@@ -216,6 +216,11 @@ const lightboxSrc = ref(null)
 
 /** ChatView 子组件引用，用于调用 scrollToBottom / focusInput / resetInputHeight */
 const chatViewRef = ref(null)
+
+// 页面首次进入时自动聚焦输入框（移动端/部分浏览器可能因策略限制而不生效）
+onMounted(() => {
+  chatViewRef.value?.focusInput()
+})
 
 /** 当前播放的 Audio 实例，用于停止朗读 */
 let currentAudio = null
