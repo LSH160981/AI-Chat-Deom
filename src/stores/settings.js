@@ -19,8 +19,8 @@ const STORAGE_KEY = 'ai-chat-settings'
 /** 默认 API 服务地址 */
 const DEFAULT_API_URL = 'https://api.yexc.top'
 
-/** 默认 API 密钥 */
-const DEFAULT_API_KEY = 'sk-M0u9pvjqujqT5Z50qz2ek6BGzjcqUjychYq6bleeJosVokAU'
+/** 默认 API 密钥（安全起见不内置，首次使用请在设置页填写） */
+const DEFAULT_API_KEY = ''
 
 /** 默认模型 */
 const DEFAULT_MODEL = 'claude-sonnet-4.5'
