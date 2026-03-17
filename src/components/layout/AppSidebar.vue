@@ -28,17 +28,30 @@
     <div class="sidebar-section">
       <p class="section-label">对话</p>
       <div class="session-list">
-        <button
+        <div
           v-for="s in sessions"
           :key="s.id"
-          class="session-item"
+          class="session-row"
           :class="{ active: activeSessionId === s.id }"
-          @click="$emit('selectSession', s.id); $emit('close')"
-          :title="s.title"
-          type="button"
         >
-          <span class="session-title">{{ s.title || '新对话' }}</span>
-        </button>
+          <button
+            class="session-item"
+            @click="$emit('selectSession', s.id); $emit('close')"
+            :title="s.title"
+            type="button"
+          >
+            <span class="session-title">{{ s.title || '新对话' }}</span>
+          </button>
+
+          <button
+            class="session-del"
+            type="button"
+            title="删除该对话"
+            @click.stop="$emit('deleteSession', s.id)"
+          >
+            🗑
+          </button>
+        </div>
       </div>
     </div>
 
@@ -93,6 +106,7 @@ defineEmits([
   'close',
   'newChat',
   'selectSession',
+  'deleteSession',
   'update:currentMode',
 ])
 </script>

@@ -131,19 +131,47 @@ textarea { scrollbar-width: none; }
 
 /* 会话列表 */
 .session-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; }
+
+.session-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+}
+.session-row.active { background: var(--active-bg); border-color: var(--border); }
+
 .session-item {
+  flex: 1;
   width: 100%;
   text-align: left;
-  border: 1px solid transparent;
+  border: none;
   background: transparent;
   border-radius: 10px;
   padding: 8px 10px;
   cursor: pointer;
   color: var(--text-secondary);
-  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  transition: background 0.15s, color 0.15s;
 }
-.session-item:hover { background: var(--hover-bg); color: var(--text); }
-.session-item.active { background: var(--active-bg); color: var(--text); border-color: var(--border); font-weight: 650; }
+.session-row:hover { background: var(--hover-bg); }
+.session-row:hover .session-item { color: var(--text); }
+.session-row.active .session-item { color: var(--text); font-weight: 650; }
+
+.session-del {
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  border-radius: 8px;
+  color: var(--text-muted);
+}
+.session-del:hover { background: rgba(239,68,68,0.12); color: #ef4444; }
+
 .session-title { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 13px; }
 
 .range-input { width: 100%; accent-color: var(--text); }

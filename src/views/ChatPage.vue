@@ -24,6 +24,7 @@
       :sessions="sessions"
       :activeSessionId="activeSessionId"
       @selectSession="selectSession"
+      @deleteSession="deleteSession"
       @close="sidebarOpen = false"
       @newChat="createNewSession"
     />
@@ -397,6 +398,24 @@ const createNewSession = () => {
   const id = crypto?.randomUUID?.() || String(Date.now())
   sessions.value.unshift({ id, title: '新对话', createdAt: Date.now(), messages: [] })
   selectSession(id)
+}
+
+/**
+ * 删除会话
+ * - 删除当前会话时：自动切换到下一个会话；若没有会话则新建一个空会话
+ */
+const deleteSession = (id) => {
+  const idx = sessions.value.findIndex(s => s.id === id)
+  if (idx === -1) return
+  sessions.value.splice(idx, 1)
+
+  if (activeSessionId.value === id) {
+    if (sessions.value.length) {
+      activeSessionId.value = sessions.value[0].id
+    } else {
+      createNewSession()
+    }
+  }
 }
 
 /**
