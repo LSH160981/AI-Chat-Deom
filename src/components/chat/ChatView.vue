@@ -21,14 +21,14 @@
     <!-- 消息滚动容器，ref 用于父组件或内部方法控制滚动 -->
     <div ref="messagesEl" class="messages-area">
       <!-- 空状态：消息列表为空时显示欢迎提示 -->
-    <div v-if="messages.length === 0" class="empty-state">
-      <div class="empty-icon">✦</div>
-      <h2>{{ $t('chat.empty') }}</h2>
-      <!-- 空状态下不显示模型名（避免无意义信息/渲染告警） -->
-    </div>
+      <div v-if="messages.length === 0" class="empty-state">
+        <div class="empty-icon">✦</div>
+        <h2>{{ $t('chat.empty') }}</h2>
+        <!-- 空状态下不显示模型名（避免无意义信息/渲染告警） -->
+      </div>
 
-    <!-- 消息列表：遍历 messages 渲染每条消息 -->
-    <div v-else class="messages-list">
+      <!-- 消息列表：遍历 messages 渲染每条消息 -->
+      <div v-else class="messages-list">
       <div
         v-for="(msg, i) in messages"
         :key="i"
