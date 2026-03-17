@@ -47,7 +47,7 @@
             <!-- 取消按钮：仅在 showCancel=true 时显示 -->
             <button v-if="showCancel" class="modal-btn cancel" @click="onCancel">{{ cancelText || $t('common.cancel') }}</button>
             <!-- 确认按钮：根据 type 绑定颜色类（danger 为红色） -->
-            <button class="modal-btn confirm" :class="type" @click="onConfirm">{{ confirmText || $t('common.confirm') }}</button>
+            <button ref="confirmBtn" class="modal-btn confirm" :class="type" @click="onConfirm">{{ confirmText || $t('common.confirm') }}</button>
           </div>
         </div>
       </div>
@@ -67,6 +67,8 @@
  * @prop {String}  cancelText   - 取消按钮文字，默认使用 i18n 的 common.cancel
  * @prop {Boolean} showCancel   - 是否显示取消按钮，默认 true（alert 场景可设为 false）
  */
+import { nextTick, ref, watch } from 'vue'
+
 const props = defineProps({
   modelValue: Boolean,
   title: String,
@@ -76,6 +78,24 @@ const props = defineProps({
   confirmText: String,
   cancelText: String,
   showCancel: { type: Boolean, default: true },
+
+  // 是否自动聚焦确认按钮（危险操作确认：Tab/回车更快）
+  focusConfirm: { type: Boolean, default: false },
+
+  // prompt 输入框（可选）
+  showInput: { type: Boolean, default: false },
+  inputValue: { type: String, default: '' },
+  inputPlaceholder: { type: String, default: '' },
+  inputMaxLength: { type: Number, default: 30 },
+})
+
+const confirmBtn = ref(null)
+
+watch(() => props.modelValue, async (v) => {
+  if (!v) return
+  if (!props.focusConfirm) return
+  await nextTick()
+  confirmBtn.value?.focus?.()
 })
 
 /**

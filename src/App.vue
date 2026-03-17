@@ -20,6 +20,7 @@
       :confirmText="modalState.confirmText"
       :cancelText="modalState.cancelText"
       :showCancel="modalState.showCancel"
+      :focusConfirm="modalState.focusConfirm"
       :showInput="modalState.showInput"
       :inputValue="modalState.inputValue"
       :inputPlaceholder="modalState.inputPlaceholder"

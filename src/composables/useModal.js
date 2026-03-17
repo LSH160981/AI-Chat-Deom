@@ -137,7 +137,7 @@ export function useModal() {
    * @param {Object} opts - 弹窗配置（同 show() 参数）
    * @returns {Promise<boolean>} 确认返回 true，取消返回 false
    */
-  const confirm = (opts) => show({ showCancel: true, ...opts })
+  const confirm = (opts) => show({ showCancel: true, focusConfirm: true, ...opts })
 
   /**
    * 显示提示框（仅有确认按钮，无取消）
@@ -147,7 +147,7 @@ export function useModal() {
    * @param {Object} opts - 弹窗配置（同 show() 参数）
    * @returns {Promise<boolean>} 用户点击确认后返回 true
    */
-  const alert = (opts) => show({ showCancel: false, ...opts })
+  const alert = (opts) => show({ showCancel: false, focusConfirm: true, ...opts })
 
   /**
    * prompt：带输入框的弹窗（用于重命名等场景）
@@ -157,6 +157,7 @@ export function useModal() {
   const prompt = (opts) => show({
     showCancel: true,
     showInput: true,
+    focusConfirm: false,
     confirmText: opts?.confirmText || '保存',
     cancelText: opts?.cancelText || '取消',
     ...opts,
