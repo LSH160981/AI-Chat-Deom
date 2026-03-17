@@ -18,11 +18,20 @@ export default defineConfig({
   },
 
   /**
+   * 生产构建移除 console/debugger（避免上线后刷日志）
+   * 注：这会移除所有 console.*（包括 console.error）。如需保留错误日志再告诉我。
+   */
+  esbuild: {
+    drop: ['console', 'debugger'],
+  },
+
+  /**
    * 构建优化：拆分大体积依赖，避免单个 chunk 过大（>500KB）
    * - vue 相关：vue / vue-router / vue-i18n
    * - markdown 渲染：markdown-it / highlight.js / katex
    */
   build: {
+    minify: 'esbuild',
     rollupOptions: {
       output: {
         manualChunks: {
