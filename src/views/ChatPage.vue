@@ -21,8 +21,6 @@
     <AppSidebar
       :open="sidebarOpen"
       v-model:currentMode="currentMode"
-      v-model:selectedModel="selectedModel"
-      v-model:systemPrompt="sessionSystemPrompt"
       @close="sidebarOpen = false"
       @newChat="newChat"
     />
@@ -38,7 +36,30 @@
           <AppIcon name="menu" :size="18" />
         </button>
         <!-- 当前模式标题 -->
-        <span class="topbar-title">{{ currentModeLabel }}</span>
+        <div class="topbar-title-row">
+          <span class="topbar-title">{{ currentModeLabel }}</span>
+
+          <!-- 仅聊天模式显示模型选择（在标题旁边） -->
+          <select
+            v-if="currentMode === MODE.CHAT && settings.detectedModels?.length"
+            class="topbar-model-select"
+            :value="selectedModel"
+            @change="selectedModel = $event.target.value"
+          >
+            <template v-for="[gName, group] in modelGroups" :key="gName">
+              <option disabled value="">— {{ gName }} —</option>
+              <option v-for="m in group" :key="m.id" :value="m.id">　{{ m.displayName || m.name }}</option>
+            </template>
+          </select>
+
+          <input
+            v-else-if="currentMode === MODE.CHAT"
+            class="topbar-model-input"
+            :value="selectedModel"
+            @input="selectedModel = $event.target.value"
+            placeholder="模型ID…"
+          />
+        </div>
         <!-- 清空按钮：仅在聊天模式且有消息时显示 -->
         <button v-if="currentMode === MODE.CHAT && messages.length > 0" class="icon-btn" @click="newChat" :title="$t('common.clear')">
           <AppIcon name="trash" :size="16" />
@@ -64,7 +85,6 @@
         :isLoading="isLoading"
         :isRecording="isRecording"
         :attachedImage="attachedImage"
-        :selectedModel="selectedModel"
         :speakingIdx="speakingIdx"
         v-model="userInput"
         @send="sendMessage"
@@ -126,6 +146,18 @@ import { sendChatMessage, generateImage as apiGenerateImage, transcribeAudio, sy
 import { CHAT_MODES } from '@/constants/models'
 import { settings } from '@/stores/settings'
 
+/**
+ * computed：把 settings.detectedModels 按 group 分组，供顶部模型下拉使用
+ */
+const modelGroups = computed(() => {
+  const map = {}
+  for (const m of (settings.detectedModels || [])) {
+    if (!map[m.group]) map[m.group] = []
+    map[m.group].push(m)
+  }
+  return Object.entries(map)
+})
+
 /** 功能模式 ID 常量，避免散落的魔法字符串 */
 const MODE = {
   CHAT:       'chat',
@@ -147,11 +179,8 @@ const currentMode = ref(MODE.CHAT)
 /** 侧边栏是否打开 */
 const sidebarOpen = ref(false)
 
-/** 当前选中的模型 ID，默认读取全局设置 */
+/** 当前选中的模型 ID（优先使用，会回退到 settings.defaultModel） */
 const selectedModel = ref(settings.defaultModel || '')
-
-/** 当前会话使用的系统提示词（可在侧边栏单独修改，不影响全局设置） */
-const sessionSystemPrompt = ref(settings.systemPrompt)
 
 /** 聊天消息列表，每条消息格式：{ role, content, image? } */
 const messages = ref([])
@@ -262,7 +291,7 @@ const sendMessage = async () => {
 
   // 构建发送给 API 的历史消息数组
   const history = []
-  const sysPrompt = sessionSystemPrompt.value || settings.systemPrompt
+  const sysPrompt = settings.systemPrompt
   if (sysPrompt) history.push({ role: 'system', content: sysPrompt }) // 添加系统提示
 
   // 取最近 contextLength 条历史（不含刚刚推入的用户消息）

@@ -138,7 +138,6 @@ import { useMarkdown } from '@/composables/useMarkdown'
  * @prop {Boolean} isLoading     - 是否正在等待 AI 响应
  * @prop {Boolean} isRecording   - 是否正在录音
  * @prop {String}  attachedImage - 已附加的图片 base64 DataURL（可选）
- * @prop {String}  selectedModel - 当前选中的模型名（空状态展示用）
  * @prop {Number}  speakingIdx   - 当前朗读中的消息索引（-1 表示未在朗读）
  * @prop {String}  modelValue    - 输入框内容（v-model 绑定）
  */
@@ -147,7 +146,6 @@ const props = defineProps({
   isLoading: Boolean,
   isRecording: Boolean,
   attachedImage: String,
-  selectedModel: String,
   speakingIdx: Number,
   modelValue: String,
 })
