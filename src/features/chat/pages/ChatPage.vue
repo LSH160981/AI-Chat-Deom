@@ -105,11 +105,11 @@
 import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
-import AppSidebar from '@/components/layout/AppSidebar.vue'
-import ChatView from '@/components/chat/ChatView.vue'
+import AppSidebar from '@/features/chat/components/AppSidebar.vue'
+import ChatView from '@/features/chat/components/ChatView.vue'
 import { useModal } from '@/composables/useModal'
 import FancySelect from '@/components/ui/FancySelect.vue'
-import { sendChatMessage } from '@/api'
+import { sendChatMessage } from '@/services/api'
 import { settings } from '@/stores/settings'
 import { storage } from '@/utils/storage'
 
@@ -571,4 +571,6 @@ const sendMessage = async () => {
 .no-api-inner a { color: #60a5fa; text-decoration: none; font-weight: 500; }
 .no-api-inner a:hover { text-decoration: underline; }
 </style>
+tyle>
+
 tyle>

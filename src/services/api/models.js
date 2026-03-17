@@ -10,7 +10,7 @@
  * 返回统一格式：{ id, name, displayName, group }
  */
 import { get } from './request'
-import { normalizeBaseUrl, detectProvider, buildHeaders } from '@/composables/useApiClient'
+import { normalizeBaseUrl, detectProvider, buildHeaders } from '@/services/apiClient'
 import { logger } from '@/utils/logger'
 
 const TAG = '[Models API]'

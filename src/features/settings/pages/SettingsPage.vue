@@ -332,8 +332,8 @@ import FancySelect from '@/components/ui/FancySelect.vue'
 import { settings, resetSettings } from '@/stores/settings'
 import { LANGUAGES } from '@/i18n'
 import { useModal } from '@/composables/useModal'
-import { fetchModels, sendChatMessage } from '@/api'
-import { normalizeBaseUrl } from '@/composables/useApiClient'
+import { fetchModels, sendChatMessage } from '@/services/api'
+import { normalizeBaseUrl } from '@/services/apiClient'
 
 /** i18n：t 为翻译函数，locale 为当前语言 ref */
 const { t, locale } = useI18n()

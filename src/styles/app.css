@@ -119,11 +119,6 @@ textarea { scrollbar-width: none; }
 }
 .sidebar-header { display: flex; align-items: center; justify-content: space-between; padding: 16px; border-bottom: 1px solid var(--border); }
 .logo { font-size: 15px; font-weight: 700; color: var(--text); }
-.mode-list { padding: 10px 8px; display: flex; flex-direction: column; gap: 2px; }
-.mode-item { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 8px; border: none; background: transparent; cursor: pointer; font-size: 14px; color: var(--text-secondary); text-align: left; transition: background 0.15s, color 0.15s; }
-.mode-item:hover { background: var(--hover-bg); color: var(--text); }
-.mode-item.active { background: var(--active-bg); color: var(--text); font-weight: 600; }
-.mode-icon { font-size: 16px; }
 .sidebar-divider { height: 1px; background: var(--border); margin: 4px 0; }
 .sidebar-section { padding: 12px 14px 0; }
 .section-label { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
@@ -244,20 +239,12 @@ textarea { scrollbar-width: none; }
 .message-content { max-width: 85%; line-height: 1.65; font-size: var(--chat-font-size); position: relative; }
 .message-content.assistant { color: var(--text); }
 .user-text { background: var(--user-bubble); color: var(--text); padding: 10px 14px; border-radius: 14px 14px 4px 14px; white-space: pre-wrap; word-break: break-word; }
-.msg-image { max-width: 240px; border-radius: 8px; margin-bottom: 6px; display: block; }
-.msg-tts-btn { background: none; border: none; cursor: pointer; font-size: 13px; opacity: 0.35; padding: 2px 4px; border-radius: 4px; margin-top: 4px; display: inline-block; transition: opacity 0.15s, background 0.15s; }
-.msg-tts-btn:hover { opacity: 1; background: var(--hover-bg); }
 
 .typing-dots { display: flex; gap: 4px; padding: 12px 0; }
 .typing-dots span { width: 7px; height: 7px; background: var(--text-muted); border-radius: 50%; animation: bounce 1.2s infinite; }
 .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
 .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
 @keyframes bounce { 0%,80%,100% { transform: translateY(0); opacity: 0.4; } 40% { transform: translateY(-6px); opacity: 1; } }
-
-/* ===== 图片预览 ===== */
-.attached-preview { padding: 0 20px 8px; max-width: 800px; margin: 0 auto; width: 100%; position: relative; display: inline-flex; }
-.attached-preview img { max-height: 80px; border-radius: 8px; }
-.remove-attach { position: absolute; top: -4px; right: 24px; background: var(--text-secondary); color: var(--bg); border: none; border-radius: 50%; width: 18px; height: 18px; font-size: 11px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
 
 /* ===== 输入区 ===== */
 .input-area {
@@ -296,49 +283,11 @@ textarea { scrollbar-width: none; }
 
 .input-wrapper { display: flex; align-items: center; gap: 6px; border: 1.5px solid var(--input-border); border-radius: 14px; padding: 8px 8px 8px 10px; transition: border-color 0.2s; max-width: 760px; margin: 0 auto; background: var(--input-bg); min-height: 48px; }
 .input-wrapper.focused { border-color: var(--text-secondary); }
-.attach-btn { width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; border: none; background: transparent; cursor: pointer; color: var(--text-muted); border-radius: 6px; flex-shrink: 0; transition: color 0.15s, background 0.15s; }
-.attach-btn:hover { color: var(--text); background: var(--hover-bg); }
-.attach-btn.recording { color: #ef4444; animation: pulse 1s infinite; }
-@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
 .input-textarea { flex: 1; border: none; outline: none; resize: none; font-size: 15px; font-family: inherit; line-height: 1.5; max-height: 160px; background: transparent; color: var(--text); padding: 6px 0; }
 .input-textarea::placeholder { color: var(--text-muted); }
 .send-btn { width: 32px; height: 32px; border-radius: 8px; border: none; background: var(--send-btn-bg); color: var(--send-btn-color); cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: opacity 0.2s; }
 .send-btn:disabled { opacity: 0.25; cursor: not-allowed; }
 .send-btn:not(:disabled):hover { opacity: 0.8; }
-/* 免责声明已移除，保留空样式占位（避免旧 class 引用导致样式缺失警告） */
-.disclaimer { display: none; }
-
-/* ===== 生成区 ===== */
-.gen-area { flex: 1; display: flex; flex-direction: column; overflow-y: auto; background: var(--bg); }
-.gen-loading { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; color: var(--text-muted); }
-.gen-spinner { width: 36px; height: 36px; border: 3px solid var(--spinner-track); border-top-color: var(--text-secondary); border-radius: 50%; animation: spin 0.8s linear infinite; }
-@keyframes spin { to { transform: rotate(360deg); } }
-
-.image-grid { display: flex; flex-wrap: wrap; gap: 16px; padding: 24px 20px; justify-content: center; }
-.image-item { position: relative; display: flex; flex-direction: column; align-items: center; gap: 8px; }
-.image-item img { max-width: 400px; max-height: 400px; border-radius: 12px; cursor: zoom-in; box-shadow: 0 2px 12px rgba(0,0,0,0.15); }
-.download-btn { font-size: 13px; color: var(--text-secondary); text-decoration: none; padding: 4px 12px; border: 1px solid var(--download-border); border-radius: 6px; background: var(--card-bg); }
-.download-btn:hover { background: var(--hover-bg); }
-
-/* ===== 语音操作 ===== */
-.speech-actions { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 20px; }
-.record-big-btn { padding: 14px 32px; border-radius: 50px; border: none; background: var(--send-btn-bg); color: var(--send-btn-color); font-size: 16px; cursor: pointer; transition: opacity 0.2s; }
-.record-big-btn:hover { opacity: 0.8; }
-.record-big-btn.recording { background: #ef4444; color: #fff; animation: pulse 1s infinite; }
-.or-divider { color: var(--text-muted); font-size: 13px; }
-.upload-audio-btn { padding: 10px 24px; border: 1.5px dashed var(--upload-dashed); border-radius: 8px; font-size: 14px; color: var(--text-muted); cursor: pointer; transition: border-color 0.2s, color 0.2s; background: transparent; }
-.upload-audio-btn:hover { border-color: var(--text-secondary); color: var(--text); }
-.transcription-result { flex: 1; padding: 24px 20px; max-width: 760px; margin: 0 auto; width: 100%; }
-.transcription-result p { font-size: 16px; line-height: 1.7; color: var(--text); background: var(--bg-secondary); padding: 16px; border-radius: 10px; border: 1px solid var(--border); }
-.clear-result { margin-top: 12px; padding: 6px 16px; border: 1px solid var(--border); border-radius: 6px; background: var(--card-bg); cursor: pointer; font-size: 13px; color: var(--text-secondary); }
-.clear-result:hover { background: var(--hover-bg); }
-
-.audio-player { padding: 24px 20px; display: flex; justify-content: center; }
-.audio-player audio { width: 100%; max-width: 500px; }
-
-/* ===== 灯箱 ===== */
-.lightbox { position: fixed; inset: 0; background: rgba(0,0,0,0.9); display: flex; align-items: center; justify-content: center; z-index: 100; cursor: zoom-out; }
-.lightbox img { max-width: 90vw; max-height: 90vh; border-radius: 8px; }
 
 /* ===== Markdown ===== */
 .markdown-body { font-size: var(--chat-font-size); line-height: 1.7; color: var(--text); }

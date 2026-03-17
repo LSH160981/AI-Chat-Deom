@@ -1,5 +1,5 @@
 /**
- * @file useApiClient.js
+ * @file src/services/apiClient.js
  * @description API 客户端核心模块
  *
  * 功能概述：
@@ -7,9 +7,6 @@
  * - 检测 API 服务商类型（OpenAI / Anthropic / Gemini / Ollama 等）
  * - 构建适配各服务商的请求头
  * - 流式对话（Chat Streaming）
- * - 文生图（Image Generation）
- * - 语音转文字（Speech to Text）
- * - 文字转语音（Text to Speech）
  *
  * 兼容：OpenAI / Anthropic / Gemini / Ollama / 任意 OpenAI 兼容接口
  */
@@ -19,9 +16,7 @@ import { settings } from '@/stores/settings'
 const TIMEOUT = {
   DETECT: 10000,
   CHAT:   60000,
-  TTS:    30000,
-  STT:    30000,
-  IMAGE:  60000,
+  // 预留：如未来加回图片/语音能力，可在此补充更细分超时
 }
 
 // ===== Cloudflare 拦截特征字符串 =====

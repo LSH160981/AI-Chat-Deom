@@ -8,7 +8,7 @@
  *  - 打印详细日志：模型、消息数、TTFB、总耗时、总字数
  */
 import { postStream } from './request'
-import { normalizeBaseUrl, detectProvider, buildHeaders } from '@/composables/useApiClient'
+import { normalizeBaseUrl, detectProvider, buildHeaders } from '@/services/apiClient'
 import { settings } from '@/stores/settings'
 import { logger } from '@/utils/logger'
 

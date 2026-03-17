@@ -7,8 +7,8 @@
  *  - /settings  → SettingsPage 设置页
  */
 import { createRouter, createWebHashHistory } from 'vue-router'
-import ChatPage from '@/views/ChatPage.vue'
-import SettingsPage from '@/views/SettingsPage.vue'
+import ChatPage from '@/features/chat/pages/ChatPage.vue'
+import SettingsPage from '@/features/settings/pages/SettingsPage.vue'
 
 const router = createRouter({
   // GitHub Pages 刷新子路由会 404，使用 hash 路由最省事
