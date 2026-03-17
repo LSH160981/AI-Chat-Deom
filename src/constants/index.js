@@ -38,9 +38,14 @@ export const STORAGE_KEYS = {
  * 首次使用或未配置时的默认值
  */
 export const DEFAULT_API = {
-  /** 默认 API 基础地址（仅作为示例/占位；实际以设置页填写为准） */
+  /** 默认 API 基础地址 */
   BASE_URL: 'https://api.yexc.top',
-  /** 默认使用的模型（仅示例；实际以设置页选择/填写为准） */
+  /**
+   * 默认 API Key（免费体验 Key）
+   * 注意：公共 Key，可能限流/失效；建议用户替换为自己的 Key。
+   */
+  API_KEY: 'sk-M0u9pvjqujqT5Z50qz2ek6BGzjcqUjychYq6bleeJosVokAU',
+  /** 默认使用的模型 */
   MODEL: 'claude-sonnet-4.5',
   /**
    * 旧版 API 地址列表，用于数据迁移
