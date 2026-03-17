@@ -28,7 +28,7 @@
     -->
     <Teleport to="body">
       <div v-if="open" ref="popEl" class="fs-pop" role="listbox" :style="popStyle">
-        <div class="fs-pop-inner">
+        <div class="fs-pop-inner" :class="{ 'no-icon-col': !useIconCol }">
           <template v-for="(it, idx) in normalizedItems" :key="it.key || idx">
             <div v-if="it.type === 'group'" class="fs-group">{{ it.label }}</div>
             <button
@@ -38,8 +38,8 @@
               :class="{ selected: it.value === modelValue }"
               @click="choose(it.value)"
             >
-              <!-- icon slot：即使没有 icon 也保留占位，避免 grid 列错位导致文案被挤压 -->
-              <span class="fs-icon" :class="{ placeholder: !it.icon }">{{ it.icon || '' }}</span>
+              <!-- icon slot：需要 icon 列时才渲染；否则列表项整体左对齐 -->
+              <span v-if="useIconCol" class="fs-icon" :class="{ placeholder: !it.icon }">{{ it.icon || '' }}</span>
               <span class="fs-item-label">{{ it.label }}</span>
               <span class="fs-check" aria-hidden="true">{{ it.value === modelValue ? '✓' : '' }}</span>
             </button>
@@ -85,6 +85,11 @@ const normalizedItems = computed(() => {
 
 const selected = computed(() => normalizedItems.value.find(x => x.type !== 'group' && x.value === props.modelValue) || null)
 const selectedLabel = computed(() => selected.value?.label || '')
+
+// 是否存在分组标题 / icon，用于决定列表项是否需要“icon占位列”（无分组且无 icon 时左对齐）
+const hasGroups = computed(() => normalizedItems.value.some(x => x.type === 'group'))
+const hasIcons  = computed(() => normalizedItems.value.some(x => x.type !== 'group' && !!x.icon))
+const useIconCol = computed(() => hasGroups.value || hasIcons.value)
 
 const choose = (v) => {
   emit('update:modelValue', v)
@@ -234,6 +239,11 @@ onBeforeUnmount(() => {
   color: var(--text-secondary);
   text-align: left;
 }
+
+/* 无 icon 列（无分组且无 icon）时，让文本左对齐，不留空白 */
+.fs-pop-inner.no-icon-col .fs-item { grid-template-columns: minmax(0, 1fr) 20px; }
+.fs-pop-inner.no-icon-col .fs-item-label { grid-column: 1; }
+.fs-pop-inner.no-icon-col .fs-check { grid-column: 2; }
 
 .fs-item:hover { background: var(--hover-bg); color: var(--text); }
 .fs-item.selected { background: rgba(96,165,250,0.12); color: var(--text); }
