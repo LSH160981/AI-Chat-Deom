@@ -27,8 +27,10 @@ const TAG = '[Chat API]'
  * @throws {ApiError} 请求失败、超时、CF 拦截时抛出
  */
 export async function sendChatMessage({ messages, model, temperature, signal, onChunk }) {
+  // 规范化 Base URL，确保不会出现 ".../v1/v1" 或尾部多余斜杠
   const baseUrl  = normalizeBaseUrl(settings.apiBaseUrl)
   const apiKey   = settings.apiKey
+  // 根据 URL 自动推断 provider（anthropic / gemini / openai-compatible）
   const provider = detectProvider(baseUrl)
 
   logger.info(TAG, `发送请求 | 模型: ${model} | 消息数: ${messages.length} | 服务商: ${provider}`)
@@ -36,28 +38,37 @@ export async function sendChatMessage({ messages, model, temperature, signal, on
   let url, body
 
   if (provider === 'anthropic') {
-    // Anthropic 格式：system 消息需从数组中提取，单独作为顶层字段
+    // Anthropic：
+    // - 端点：/messages
+    // - system 提示词不是 messages 数组的一项，需要单独放到顶层字段 system
     url = baseUrl + '/messages'
+
     const sysMsg  = messages.find(m => m.role === 'system')
     const history = messages.filter(m => m.role !== 'system')
+
     body = {
       model,
       max_tokens: 4096,
       stream: true,
       messages: history,
-      ...(sysMsg        ? { system: sysMsg.content } : {}),
-      ...(temperature != null ? { temperature }      : {}),
+      ...(sysMsg ? { system: sysMsg.content } : {}),
+      ...(temperature != null ? { temperature } : {}),
     }
   } else if (provider === 'gemini') {
-    // Gemini 使用其 OpenAI 兼容端点
+    // Gemini：走 OpenAI 兼容端点
+    // 注意：Gemini 原生接口与 OpenAI 不同，这里使用其兼容层以复用 SSE 解析逻辑
     url  = baseUrl + '/openai/chat/completions'
     body = { model, messages, stream: true, temperature }
   } else {
-    // 标准 OpenAI 兼容格式（DeepSeek / Groq / OpenRouter 等）
+    // OpenAI 兼容：/chat/completions
+    // 适配：OpenAI / DeepSeek / Groq / OpenRouter / 自建中转
     url  = baseUrl + '/chat/completions'
     body = { model, messages, stream: true, temperature }
   }
 
+  // 统一走 postStream：
+  // - 会以 SSE 方式读取响应流
+  // - 并在每个 data: chunk 到达时回调 onChunk(text)
   await postStream(url, body, {
     headers: buildHeaders(apiKey, provider),
     signal,

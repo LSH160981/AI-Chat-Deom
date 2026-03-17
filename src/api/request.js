@@ -72,10 +72,15 @@ async function throwForStatus(resp, tag) {
 }
 
 /**
- * 包装 fetch，统一处理网络错误和超时
- * @param {string} tag
- * @param {string} url
- * @param {RequestInit} init
+ * 包装 fetch：统一处理网络错误/超时，并转为 ApiError
+ *
+ * 约定：
+ * - AbortError 统一视为 TIMEOUT（也可能是用户主动取消）
+ * - 其他错误视为 NETWORK_ERROR
+ *
+ * @param {string} tag - 日志 tag
+ * @param {string} url - 请求地址
+ * @param {RequestInit} init - fetch 参数
  * @returns {Promise<Response>}
  */
 async function safeFetch(tag, url, init) {
