@@ -123,8 +123,7 @@
         </svg>
       </button>
     </div>
-    <!-- 底部免责声明文字 -->
-    <p class="disclaimer">{{ $t('chat.disclaimer') }}</p>
+
   </div>
 </template>
 
