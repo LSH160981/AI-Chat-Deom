@@ -128,8 +128,5 @@ export const TTS_VOICE_MAP = {
  *  - label：模式的中文显示名称
  */
 export const CHAT_MODES = [
-  { id: 'chat', icon: '💬', label: 'AI 对话' },          // 普通 AI 对话模式
-  { id: 'txt2img', icon: '🎨', label: '文生图' },         // 文字生成图片模式
-  { id: 'speech2txt', icon: '🎙️', label: '语音转文字' }, // 录音识别模式
-  { id: 'txt2speech', icon: '🔊', label: '文字转语音' },  // 文字朗读模式
+  { id: 'chat', icon: '💬', label: 'AI 对话' },
 ]

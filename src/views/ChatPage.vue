@@ -10,9 +10,7 @@
     - 语音录入（VAD）、图片上传与附件预览
     - 图片生成、STT 独立页、TTS 独立页
     - 图片灯箱（lightbox）大图预览
-  依赖：AppSidebar、ChatView、ImageGenView、SpeechToTextView、
-        TextToSpeechView、useRecorder、useModal、useApiClient、
-        settings store
+  依赖：AppSidebar、ChatView、useModal、settings store
   ============================================================
 -->
 <template>
@@ -87,55 +85,15 @@
         ref="chatViewRef"
         :messages="messages"
         :isLoading="isLoading"
-        :isRecording="isRecording"
-        :attachedImage="attachedImage"
-        :speakingIdx="speakingIdx"
         v-model="userInput"
         @send="sendMessage"
-        @speak="speakText"
-        @toggleRecording="toggleRecording"
-        @imageUpload="handleImageUpload"
-        @removeImage="attachedImage = null"
         @clear="newChat"
         @stop="stopGenerating"
         @regenerate="regenerateLast"
       />
 
-      <!-- 文生图视图：模式为 txt2img 时渲染 -->
-      <ImageGenView
-        v-else-if="currentMode === MODE.TXT2IMG"
-        :generatedImages="generatedImages"
-        :isLoading="isLoading"
-        v-model="userInput"
-        @generate="generateImage"
-        @preview="lightboxSrc = $event"
-      />
-
-      <!-- 语音转文字视图：模式为 speech2txt 时渲染 -->
-      <SpeechToTextView
-        v-else-if="currentMode === MODE.SPEECH2TXT"
-        :transcription="transcription"
-        :isLoading="isLoading"
-        :isRecording="isRecording"
-        @toggleRecording="toggleSTTRecording"
-        @upload="handleAudioUpload"
-        @clear="transcription = ''"
-      />
-
-      <!-- 文字转语音视图：模式为 txt2speech 时渲染 -->
-      <TextToSpeechView
-        v-else-if="currentMode === MODE.TXT2SPEECH"
-        :audioUrl="audioUrl"
-        :isLoading="isLoading"
-        v-model="userInput"
-        @synthesize="doSynthesize"
-      />
     </main>
 
-    <!-- 灯箱：点击图片大图预览，点击任意处关闭 -->
-    <div v-if="lightboxSrc" class="lightbox" @click="lightboxSrc = null">
-      <img :src="lightboxSrc" />
-    </div>
   </div>
 </template>
 
@@ -147,7 +105,7 @@
  * 主要负责：
  * - 顶部 Topbar（当前模式标题 / 模型选择 / 设置入口）
  * - 侧边栏（模式切换）
- * - 四个功能视图的渲染与状态协调：聊天 / 文生图 / 语音转文字 / 文字转语音
+ * - 单一聊天视图（仅保留对话模式）
  * - 聊天流式发送、停止、重新回答、上下文拼接等核心业务逻辑
  */
 import { ref, computed, onMounted, watch, nextTick } from 'vue'
@@ -155,13 +113,9 @@ import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import AppSidebar from '@/components/layout/AppSidebar.vue'
 import ChatView from '@/components/chat/ChatView.vue'
-import ImageGenView from '@/components/chat/ImageGenView.vue'
-import SpeechToTextView from '@/components/chat/SpeechToTextView.vue'
-import TextToSpeechView from '@/components/chat/TextToSpeechView.vue'
-import { useRecorder } from '@/composables/useRecorder'
 import { useModal } from '@/composables/useModal'
 import FancySelect from '@/components/ui/FancySelect.vue'
-import { sendChatMessage, generateImage as apiGenerateImage, transcribeAudio, synthesizeSpeech } from '@/api'
+import { sendChatMessage } from '@/api'
 import { CHAT_MODES } from '@/constants/models'
 import { settings } from '@/stores/settings'
 import { storage } from '@/utils/storage'
@@ -190,10 +144,7 @@ const modelSelectItems = computed(() => {
 
 /** 功能模式 ID 常量，避免散落的魔法字符串 */
 const MODE = {
-  CHAT:       'chat',
-  TXT2IMG:    'txt2img',
-  SPEECH2TXT: 'speech2txt',
-  TXT2SPEECH: 'txt2speech',
+  CHAT: 'chat',
 }
 
 // 国际化翻译函数
@@ -294,7 +245,7 @@ const generateSessionTitle = async () => {
   }
 }
 
-/** 当前功能模式：chat / txt2img / speech2txt / txt2speech */
+/** 当前功能模式：仅保留 chat */
 const currentMode = ref(MODE.CHAT)
 
 /** 侧边栏是否打开 */
@@ -322,24 +273,6 @@ const userInput = ref('')
 /** 是否正在等待 API 响应 */
 const isLoading = ref(false)
 
-/** 用户粘贴/上传的图片（base64 DataURL），用于视觉模型 */
-const attachedImage = ref(null)
-
-/** 文生图结果 URL 列表 */
-const generatedImages = ref([])
-
-/** 语音转文字结果文本 */
-const transcription = ref('')
-
-/** 文字转语音生成的音频 URL（blob URL 或远程 URL） */
-const audioUrl = ref(null)
-
-/** 当前正在朗读的消息索引，-1 表示未在朗读 */
-const speakingIdx = ref(-1)
-
-/** 灯箱当前显示的图片 src，null 表示关闭 */
-const lightboxSrc = ref(null)
-
 /** ChatView 子组件引用，用于调用 scrollToBottom / focusInput / resetInputHeight */
 const chatViewRef = ref(null)
 
@@ -362,7 +295,7 @@ onMounted(async () => {
 
 // 将对话消息持久化到 localStorage（用于“从设置页返回后不丢对话”）
 watch(sessions, (v) => {
-  // 只缓存 role/content/image（image 可能很大：这里不缓存 user.image，避免 localStorage 爆掉）
+  // 只缓存 role/content（避免膨胀）
   const slimSessions = (v || []).map(s => ({
     id: s.id,
     title: s.title,
@@ -384,9 +317,6 @@ watch(() => route.params.sessionId, (sid) => {
   // 路由切换触发的会话切换：也要滚到底
   selectSession(sid)
 })
-
-/** 当前播放的 Audio 实例，用于停止朗读 */
-let currentAudio = null
 
 /** 当前流式请求的 AbortController，用于中断请求 */
 let abortController = null
@@ -465,8 +395,6 @@ const regenerateLast = async () => {
   }
 }
 
-// 语音录音 composable，提供 isRecording / startRecording / stopRecording
-const { isRecording, startRecording, stopRecording } = useRecorder()
 
 /**
  * computed：当前模式的显示标签
@@ -486,7 +414,6 @@ const selectSession = async (id) => {
   }
 
   userInput.value = ''
-  attachedImage.value = null
   abortController?.abort()
 
   // 切换会话后：自动滚到底 + 聚焦（用户下一步大概率继续输入）
@@ -567,7 +494,6 @@ const newChat = async () => {
   if (!activeSession.value) return
   activeSession.value.messages = []
   userInput.value = ''
-  attachedImage.value = null
   abortController?.abort()
 
   // 清空当前会话后自动聚焦（用户下一步大概率继续输入）
@@ -576,19 +502,6 @@ const newChat = async () => {
   }
 }
 
-/**
- * 处理图片上传事件
- * 将用户选择的图片文件读取为 base64 DataURL，存入 attachedImage
- * @param {Event} e - input[type=file] 的 change 事件
- */
-const handleImageUpload = (e) => {
-  const file = e.target.files[0]
-  if (!file) return
-  const reader = new FileReader()
-  // 读取完成后将结果存入响应式变量
-  reader.onload = (ev) => { attachedImage.value = ev.target.result }
-  reader.readAsDataURL(file) // 以 DataURL 方式读取
-}
 
 // ===== Chat =====
 
@@ -617,13 +530,11 @@ const sendMessage = async () => {
     return
   }
 
-  const img = attachedImage.value // 暂存图片，发送后清空
   userInput.value = ''            // 清空输入框
-  attachedImage.value = null      // 清空附件
   chatViewRef.value?.resetInputHeight() // 重置输入框高度
 
-  // 将用户消息推入消息列表（含可选图片）
-  const userMsg = { role: 'user', content: text, image: img }
+  // 将用户消息推入消息列表
+  const userMsg = { role: 'user', content: text }
   messages.value.push(userMsg)
 
   // 若当前会话还是默认标题，尽早生成一个（不阻塞主对话）
@@ -661,15 +572,6 @@ const sendMessage = async () => {
       },
     })
 
-    // 自动 TTS：若设置开启，则对 AI 回复进行语音合成（限前500字）
-    if (settings.ttsEnabled) {
-      const full = messages.value[messages.value.length - 1].content
-      try {
-        const url = await synthesizeSpeech({ text: full.slice(0, 500), voice: settings.ttsVoice, model: settings.ttsModel || 'tts-1' })
-        const audio = new Audio(url)
-        audio.play()
-      } catch { /* TTS 失败不影响主流程 */ }
-    }
   } catch (e) {
     if (e.name !== 'AbortError') {
       // 非用户主动中断时，在消息中显示错误信息
@@ -683,161 +585,6 @@ const sendMessage = async () => {
   }
 }
 
-/**
- * 朗读指定消息文本（TTS 按需朗读）
- * 若当前正在朗读同一条消息则停止，否则开始朗读
- * @param {string} text - 要朗读的文本内容
- * @param {number} idx  - 消息在列表中的索引（用于高亮标记）
- */
-const speakText = async (text, idx) => {
-  if (speakingIdx.value === idx) {
-    // 再次点击同一条消息：停止朗读
-    currentAudio?.pause()
-    currentAudio = null
-    speakingIdx.value = -1
-    return
-  }
-  speakingIdx.value = idx // 标记当前朗读的消息
-  try {
-    // 调用 TTS API 获取音频 URL（最多500字）
-    const url = await synthesizeSpeech({ text: text.slice(0, 500), voice: settings.ttsVoice, model: settings.ttsModel || 'tts-1' })
-    currentAudio = new Audio(url)
-    currentAudio.play()
-    // 播放结束后重置朗读状态
-    currentAudio.onended = () => { speakingIdx.value = -1; currentAudio = null }
-  } catch { speakingIdx.value = -1 } // 失败时重置状态
-}
-
-// ===== 语音输入 =====
-
-/**
- * 切换聊天界面的语音录音状态
- * 录音结束后自动调用 STT API 将语音转为文字并追加到输入框
- */
-const toggleRecording = async () => {
-  // 停止录音：用户意图通常是“回到输入框继续编辑/发送”
-  if (isRecording.value) {
-    stopRecording()
-    if (currentMode.value === MODE.CHAT) await focusChatInput()
-    return
-  }
-
-  try {
-    await startRecording(async (blob) => {
-      // 录音完成回调：调用转写 API
-      try {
-        const text = await transcribeAudio(blob)
-        // 将转写结果追加到输入框（如果已有内容则加空格分隔）
-        userInput.value += (userInput.value ? ' ' : '') + text
-        // 转写结束后自动聚焦输入框，便于继续补充/修改
-        if (currentMode.value === MODE.CHAT) await focusChatInput()
-      } catch (e) {
-        if (import.meta.env.DEV) console.error('[ChatPage][STT]', e)
-      }
-    })
-  } catch {
-    // 麦克风权限被拒绝时弹窗提示
-    await alert({ icon: '🎙️', title: t('stt.micDenied'), showCancel: false })
-  }
-}
-
-// ===== 文生图 =====
-
-/**
- * 调用图像生成 API 生成图片
- * 使用 userInput 作为提示词，结果存入 generatedImages
- */
-const generateImage = async () => {
-  const prompt = userInput.value.trim()
-  if (!prompt || isLoading.value) return // 空提示词或正在加载时不处理
-  userInput.value = ''          // 清空输入框
-  isLoading.value = true
-  generatedImages.value = []    // 清空上一次结果
-  try {
-    // 未配置图像模型时直接提示（避免默认走 dall-e-3 导致 503/找不到渠道）
-    if (!settings.imageModel) {
-      await alert({
-        icon: '⚙️',
-        title: '未配置图片模型',
-        message: '当前接口可能不支持默认图片模型。请到设置页填写可用的 image model ID，或更换支持文生图的服务商。',
-        showCancel: false,
-      })
-      return
-    }
-
-    const url = await apiGenerateImage({
-      prompt,
-      model: settings.imageModel,                     // 图像生成模型（用户配置）
-      size: settings.imageSize || '1024x1024',         // 图像尺寸
-      quality: settings.imageQuality || 'standard',    // 图像质量
-    })
-    generatedImages.value = [url] // 将生成的图片 URL 存入列表
-  } catch (e) {
-    await alert({ icon: '⚠️', title: `生成失败：${e.message}`, showCancel: false })
-  } finally {
-    isLoading.value = false
-  }
-}
-
-// ===== STT 独立页 =====
-
-/**
- * 切换语音转文字页面的录音状态
- * 录音结束后自动转写，结果存入 transcription
- */
-const toggleSTTRecording = async () => {
-  if (isRecording.value) { stopRecording(); return } // 正在录音则停止
-  try {
-    await startRecording(async (blob) => {
-      // 录音完成回调：调用转写 API
-      isLoading.value = true
-      try {
-        transcription.value = await transcribeAudio(blob) // 存储转写结果
-      } catch (e) {
-        await alert({ icon: '⚠️', title: `转写失败：${e.message}`, showCancel: false })
-      } finally { isLoading.value = false }
-    })
-  } catch {
-    // 麦克风权限被拒绝时弹窗提示
-    await alert({ icon: '🎙️', title: t('stt.micDenied'), showCancel: false })
-  }
-}
-
-/**
- * 处理音频文件上传并转写
- * 用户通过文件选择器上传音频文件，调用 STT API 转写
- * @param {Event} e - input[type=file] 的 change 事件
- */
-const handleAudioUpload = async (e) => {
-  const file = e.target.files[0]
-  if (!file) return
-  isLoading.value = true
-  transcription.value = '' // 清空上一次结果
-  try {
-    transcription.value = await transcribeAudio(file) // 直接传 File 对象
-  } catch (err) {
-    await alert({ icon: '⚠️', title: `转写失败：${err.message}`, showCancel: false })
-  } finally { isLoading.value = false }
-}
-
-// ===== TTS 独立页 =====
-
-/**
- * 执行文字转语音合成
- * 将 userInput 文本发送给 TTS API，生成音频并存入 audioUrl
- */
-const doSynthesize = async () => {
-  const text = userInput.value.trim()
-  if (!text || isLoading.value) return // 空文本或正在加载时不处理
-  isLoading.value = true
-  audioUrl.value = null // 清空旧音频
-  try {
-    // 调用合成 API，传入文本、音色和模型
-    audioUrl.value = await synthesizeSpeech({ text, voice: settings.ttsVoice, model: settings.ttsModel || 'tts-1' })
-  } catch (e) {
-    await alert({ icon: '⚠️', title: `合成失败：${e.message}`, showCancel: false })
-  } finally { isLoading.value = false }
-}
 </script>
 
 <style>

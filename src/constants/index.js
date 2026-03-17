@@ -13,12 +13,6 @@
 export const CHAT_MODE = {
   /** 普通文本对话模式 */
   CHAT: 'chat',
-  /** 文本生成图片模式 */
-  TXT2IMG: 'txt2img',
-  /** 语音转文字模式 */
-  SPEECH2TXT: 'speech2txt',
-  /** 文字转语音模式 */
-  TXT2SPEECH: 'txt2speech',
 }
 
 /**
