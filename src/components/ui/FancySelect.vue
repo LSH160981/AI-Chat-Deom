@@ -23,29 +23,34 @@
       <span class="fs-chevron" aria-hidden="true">▾</span>
     </button>
 
-    <div v-if="open" class="fs-pop" role="listbox">
-      <div class="fs-pop-inner">
-        <template v-for="(it, idx) in normalizedItems" :key="it.key || idx">
-          <div v-if="it.type === 'group'" class="fs-group">{{ it.label }}</div>
-          <button
-            v-else
-            type="button"
-            class="fs-item"
-            :class="{ selected: it.value === modelValue }"
-            @click="choose(it.value)"
-          >
-            <span v-if="it.icon" class="fs-icon">{{ it.icon }}</span>
-            <span class="fs-item-label">{{ it.label }}</span>
-            <span class="fs-check" aria-hidden="true">{{ it.value === modelValue ? '✓' : '' }}</span>
-          </button>
-        </template>
+    <!--
+      重要：下拉面板用 Teleport 挂到 body，避免被父容器 overflow/z-index 裁剪导致“看不到”。
+    -->
+    <Teleport to="body">
+      <div v-if="open" ref="popEl" class="fs-pop" role="listbox" :style="popStyle">
+        <div class="fs-pop-inner">
+          <template v-for="(it, idx) in normalizedItems" :key="it.key || idx">
+            <div v-if="it.type === 'group'" class="fs-group">{{ it.label }}</div>
+            <button
+              v-else
+              type="button"
+              class="fs-item"
+              :class="{ selected: it.value === modelValue }"
+              @click="choose(it.value)"
+            >
+              <span v-if="it.icon" class="fs-icon">{{ it.icon }}</span>
+              <span class="fs-item-label">{{ it.label }}</span>
+              <span class="fs-check" aria-hidden="true">{{ it.value === modelValue ? '✓' : '' }}</span>
+            </button>
+          </template>
+        </div>
       </div>
-    </div>
+    </Teleport>
   </div>
 </template>
 
 <script setup>
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, nextTick, ref } from 'vue'
 
 const props = defineProps({
   modelValue: { type: String, default: '' },
@@ -64,6 +69,8 @@ const emit = defineEmits(['update:modelValue', 'change'])
 
 const open = ref(false)
 const rootEl = ref(null)
+const popEl = ref(null)
+const popStyle = ref({})
 
 const normalizedItems = computed(() => {
   return (props.items || []).map((x, i) => ({
@@ -84,7 +91,38 @@ const choose = (v) => {
   open.value = false
 }
 
-const toggle = () => { if (!props.disabled) open.value = !open.value }
+const updatePopPos = () => {
+  if (!rootEl.value) return
+  const trigger = rootEl.value.querySelector('.fs-trigger')
+  if (!trigger) return
+  const r = trigger.getBoundingClientRect()
+
+  // 固定定位，避免受任何父容器影响
+  const width = Math.max(r.width, 220)
+  // 默认向下展开；若底部空间不足则向上
+  const preferDownTop = r.bottom + 8
+  const maxH = 260
+  const viewportH = window.innerHeight
+  const downFits = preferDownTop + maxH < viewportH - 10
+  const top = downFits ? preferDownTop : Math.max(10, r.top - 8 - maxH)
+
+  popStyle.value = {
+    position: 'fixed',
+    left: `${Math.max(10, Math.min(r.left, window.innerWidth - width - 10))}px`,
+    top: `${top}px`,
+    width: `${Math.min(width, window.innerWidth - 20)}px`,
+    zIndex: 9999,
+  }
+}
+
+const toggle = async () => {
+  if (props.disabled) return
+  open.value = !open.value
+  if (open.value) {
+    await nextTick()
+    updatePopPos()
+  }
+}
 
 const onDocDown = (e) => {
   if (!open.value) return
@@ -97,14 +135,20 @@ const onKeyDown = (e) => {
   if (e.key === 'Escape') open.value = false
 }
 
+const onWin = () => { if (open.value) updatePopPos() }
+
 onMounted(() => {
   document.addEventListener('mousedown', onDocDown)
   document.addEventListener('keydown', onKeyDown)
+  window.addEventListener('resize', onWin)
+  window.addEventListener('scroll', onWin, true)
 })
 
 onBeforeUnmount(() => {
   document.removeEventListener('mousedown', onDocDown)
   document.removeEventListener('keydown', onKeyDown)
+  window.removeEventListener('resize', onWin)
+  window.removeEventListener('scroll', onWin, true)
 })
 </script>
 
@@ -149,11 +193,7 @@ onBeforeUnmount(() => {
 .fs-chevron { color: var(--text-muted); font-size: 12px; }
 
 .fs-pop {
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: calc(100% + 8px);
-  z-index: 50;
+  /* position/left/top/width/z-index 由 popStyle（fixed + Teleport）控制 */
 }
 
 .fs-pop-inner {
