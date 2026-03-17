@@ -40,17 +40,14 @@
           <span class="topbar-title">{{ currentModeLabel }}</span>
 
           <!-- 仅聊天模式显示模型选择（在标题旁边） -->
-          <select
+          <FancySelect
             v-if="currentMode === MODE.CHAT && settings.detectedModels?.length"
-            class="topbar-model-select"
-            :value="selectedModel"
-            @change="selectedModel = $event.target.value"
-          >
-            <template v-for="[gName, group] in modelGroups" :key="gName">
-              <option disabled value="">— {{ gName }} —</option>
-              <option v-for="m in group" :key="m.id" :value="m.id">　{{ m.displayName || m.name }}</option>
-            </template>
-          </select>
+            class="topbar-model-fancy"
+            :modelValue="selectedModel"
+            @update:modelValue="(v) => selectedModel = v"
+            :items="modelSelectItems"
+            placeholder="选择模型"
+          />
 
           <input
             v-else-if="currentMode === MODE.CHAT"
@@ -147,6 +144,7 @@ import SpeechToTextView from '@/components/chat/SpeechToTextView.vue'
 import TextToSpeechView from '@/components/chat/TextToSpeechView.vue'
 import { useRecorder } from '@/composables/useRecorder'
 import { useModal } from '@/composables/useModal'
+import FancySelect from '@/components/ui/FancySelect.vue'
 import { sendChatMessage, generateImage as apiGenerateImage, transcribeAudio, synthesizeSpeech } from '@/api'
 import { CHAT_MODES } from '@/constants/models'
 import { settings } from '@/stores/settings'
@@ -161,6 +159,16 @@ const modelGroups = computed(() => {
     map[m.group].push(m)
   }
   return Object.entries(map)
+})
+
+/** FancySelect 用的模型列表（含分组标题） */
+const modelSelectItems = computed(() => {
+  const items = []
+  for (const [gName, group] of modelGroups.value) {
+    items.push({ type: 'group', label: gName })
+    for (const m of group) items.push({ value: m.id, label: m.displayName || m.name || m.id })
+  }
+  return items
 })
 
 /** 功能模式 ID 常量，避免散落的魔法字符串 */

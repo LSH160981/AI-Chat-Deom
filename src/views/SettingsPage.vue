@@ -263,13 +263,18 @@
           <div class="setting-info">
             <label>尺寸</label>
           </div>
-          <select v-model="settings.imageSize" class="s-select">
-            <option value="256x256">256×256</option>
-            <option value="512x512">512×512</option>
-            <option value="1024x1024">1024×1024</option>
-            <option value="1792x1024">1792×1024</option>
-            <option value="1024x1792">1024×1792</option>
-          </select>
+          <FancySelect
+            :modelValue="settings.imageSize"
+            @update:modelValue="(v) => settings.imageSize = v"
+            :items="[
+              { value: '256x256', label: '256×256' },
+              { value: '512x512', label: '512×512' },
+              { value: '1024x1024', label: '1024×1024' },
+              { value: '1792x1024', label: '1792×1024' },
+              { value: '1024x1792', label: '1024×1792' },
+            ]"
+            placeholder="选择尺寸"
+          />
         </div>
 
         <!-- 图片质量选择 -->
@@ -277,10 +282,15 @@
           <div class="setting-info">
             <label>{{ $t('settings.imageQuality') }}</label>
           </div>
-          <select v-model="settings.imageQuality" class="s-select">
-            <option value="standard">Standard</option>
-            <option value="hd">HD</option>
-          </select>
+          <FancySelect
+            :modelValue="settings.imageQuality"
+            @update:modelValue="(v) => settings.imageQuality = v"
+            :items="[
+              { value: 'standard', label: 'Standard' },
+              { value: 'hd', label: 'HD' },
+            ]"
+            placeholder="选择质量"
+          />
         </div>
       </section>
 
