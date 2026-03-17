@@ -127,8 +127,13 @@ const toggle = async () => {
 
 const onDocDown = (e) => {
   if (!open.value) return
-  if (!rootEl.value) return
-  if (!rootEl.value.contains(e.target)) open.value = false
+
+  // Teleport 到 body 后，popEl 不再是 rootEl 的子节点；需要同时判断 popEl
+  const t = e.target
+  if (rootEl.value?.contains(t)) return
+  if (popEl.value?.contains(t)) return
+
+  open.value = false
 }
 
 const onKeyDown = (e) => {
