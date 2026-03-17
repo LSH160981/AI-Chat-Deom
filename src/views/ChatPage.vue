@@ -198,7 +198,7 @@ const MODE = {
 // 国际化翻译函数
 const { t } = useI18n()
 // 全局模态弹窗（alert/confirm）
-const { alert, confirm } = useModal()
+const { alert, confirm, prompt } = useModal()
 
 // ===== 会话状态 =====
 
@@ -467,9 +467,21 @@ const renameSession = async (id) => {
   const s = sessions.value.find(x => x.id === id)
   if (!s) return
 
-  const name = window.prompt('重命名对话：', s.title || '')
-  if (!name) return
-  s.title = name.trim().slice(0, 30) || s.title
+  const name = await prompt({
+    icon: '✎',
+    title: '重命名对话',
+    message: '请输入新的对话标题',
+    inputValue: s.title || '',
+    inputPlaceholder: '例如：洛必达法则解释',
+    inputMaxLength: 30,
+    confirmText: '保存',
+    cancelText: '取消',
+  })
+  if (name === null) return
+
+  const v = String(name).trim().slice(0, 30)
+  if (!v) return
+  s.title = v
 }
 
 const deleteSession = async (id) => {

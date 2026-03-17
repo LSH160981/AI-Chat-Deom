@@ -20,6 +20,11 @@
       :confirmText="modalState.confirmText"
       :cancelText="modalState.cancelText"
       :showCancel="modalState.showCancel"
+      :showInput="modalState.showInput"
+      :inputValue="modalState.inputValue"
+      :inputPlaceholder="modalState.inputPlaceholder"
+      :inputMaxLength="modalState.inputMaxLength"
+      @update:inputValue="(v) => modalState.inputValue = v"
       @confirm="modalOnConfirm"
       @cancel="modalOnCancel"
     />

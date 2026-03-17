@@ -149,5 +149,18 @@ export function useModal() {
    */
   const alert = (opts) => show({ showCancel: false, ...opts })
 
-  return { state, confirm, alert, onConfirm, onCancel }
+  /**
+   * prompt：带输入框的弹窗（用于重命名等场景）
+   * @param {Object} opts
+   * @returns {Promise<string|null>} 确认返回字符串，取消返回 null
+   */
+  const prompt = (opts) => show({
+    showCancel: true,
+    showInput: true,
+    confirmText: opts?.confirmText || '保存',
+    cancelText: opts?.cancelText || '取消',
+    ...opts,
+  })
+
+  return { state, confirm, alert, prompt, onConfirm, onCancel }
 }

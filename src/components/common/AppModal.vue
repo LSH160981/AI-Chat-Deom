@@ -29,8 +29,19 @@
           <h3 v-if="title" class="modal-title">{{ title }}</h3>
           <!-- 可选描述文本 -->
           <p v-if="message" class="modal-message">{{ message }}</p>
+          <!-- prompt 输入框（可选）：用于重命名等场景 -->
+          <input
+            v-if="showInput"
+            class="modal-input"
+            :value="inputValue"
+            :placeholder="inputPlaceholder"
+            :maxlength="inputMaxLength"
+            @input="$emit('update:inputValue', $event.target.value)"
+          />
+
           <!-- 默认插槽：允许插入自定义内容（如表单、列表等） -->
           <slot />
+
           <!-- 操作按钮区域：showCancel=false 时添加 single 类居中显示 -->
           <div class="modal-actions" :class="{ single: !showCancel }">
             <!-- 取消按钮：仅在 showCancel=true 时显示 -->
@@ -72,8 +83,9 @@ const props = defineProps({
  * update:modelValue - 关闭弹窗时通知父组件更新 v-model
  * confirm           - 用户点击确认时触发
  * cancel            - 用户点击取消或点击遮罩时触发
+ * update:inputValue - 输入框变化时同步
  */
-const emit = defineEmits(['update:modelValue', 'confirm', 'cancel'])
+const emit = defineEmits(['update:modelValue', 'confirm', 'cancel', 'update:inputValue'])
 
 /**
  * 处理确认操作
@@ -123,6 +135,22 @@ const onCancel = () => {
 .modal-icon { font-size: 36px; margin-bottom: 12px; }
 .modal-title { font-size: 17px; font-weight: 700; color: var(--text); margin-bottom: 8px; }
 .modal-message { font-size: 14px; color: var(--text-secondary); line-height: 1.6; margin-bottom: 20px; }
+
+.modal-input {
+  width: 100%;
+  height: 40px;
+  padding: 0 12px;
+  border-radius: 12px;
+  border: 1px solid var(--input-border);
+  background: var(--input-bg);
+  color: var(--text);
+  font-size: 14px;
+  outline: none;
+}
+.modal-input:focus {
+  border-color: #60a5fa;
+  box-shadow: 0 0 0 3px rgba(96,165,250,0.25);
+}
 
 /* 按钮操作区域 */
 .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
