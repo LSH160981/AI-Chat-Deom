@@ -1,3 +1,7 @@
+/**
+ * @file src/i18n/locales/ja.js
+ * @description 日本語ロケール
+ */
 export default {
   common: {
     send: '送信',

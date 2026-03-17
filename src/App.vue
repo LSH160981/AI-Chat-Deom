@@ -1,3 +1,8 @@
+<!--
+  App.vue（根组件）
+  - 承载 RouterView
+  - 挂载全局 AppModal
+-->
 <template>
   <!-- 应用根容器，所有页面都在此节点下渲染 -->
   <div id="app">

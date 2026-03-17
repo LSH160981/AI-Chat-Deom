@@ -1,3 +1,7 @@
+/**
+ * @file src/i18n/locales/ru.js
+ * @description Русская локализация
+ */
 export default {
   common: {
     send: 'Отправить',

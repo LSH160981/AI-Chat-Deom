@@ -1,3 +1,7 @@
+/**
+ * @file src/i18n/locales/ko.js
+ * @description 한국어 로케일
+ */
 export default {
   common: {
     send: '전송',

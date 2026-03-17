@@ -1,3 +1,7 @@
+/**
+ * @file src/i18n/locales/en.js
+ * @description English locale strings
+ */
 export default {
   common: {
     send: 'Send',

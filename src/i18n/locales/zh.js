@@ -1,3 +1,12 @@
+/**
+ * @file src/i18n/locales/zh.js
+ * @description 中文（简体）语言包
+ *
+ * 命名约定：
+ * - common: 通用按钮/提示
+ * - settings: 设置页
+ * - chat/image/stt/tts: 各功能模块文案
+ */
 export default {
   // 通用
   common: {

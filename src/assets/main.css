@@ -1,3 +1,11 @@
+/*
+ * @file src/assets/main.css
+ * @description Tailwind 入口文件
+ *
+ * 说明：
+ * - 这里仅引入 Tailwind 的 base/components/utilities。
+ * - 具体业务样式主要在：src/styles/app.css，以及各组件 <style> 中维护。
+ */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
