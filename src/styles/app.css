@@ -152,7 +152,38 @@ textarea { scrollbar-width: none; }
 
 /* ===== Topbar ===== */
 .topbar { display: flex; align-items: center; gap: 10px; padding: 10px 16px; border-bottom: 1px solid var(--border); background: var(--bg-secondary); flex-shrink: 0; }
-.topbar-title { flex: 1; font-size: 15px; font-weight: 600; color: var(--text); }
+
+/* 标题 + 模型选择一行 */
+.topbar-title-row { flex: 1; display: flex; align-items: center; gap: 10px; min-width: 0; }
+
+.topbar-title { font-size: 15px; font-weight: 600; color: var(--text); white-space: nowrap; }
+
+/* 顶部模型下拉/输入 */
+.topbar-model-select,
+.topbar-model-input {
+  height: 28px;
+  max-width: 220px;
+  width: 100%;
+  padding: 4px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--input-border);
+  background: var(--input-bg);
+  color: var(--text);
+  font-size: 12px;
+  outline: none;
+}
+
+.topbar-model-select {
+  padding-right: 26px;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+}
+
+.topbar-model-input::placeholder { color: var(--text-muted); }
+
 .icon-btn { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border: none; background: transparent; cursor: pointer; border-radius: 6px; color: var(--text-muted); transition: background 0.15s, color 0.15s; }
 .icon-btn:hover { background: var(--hover-bg); color: var(--text); }
 
