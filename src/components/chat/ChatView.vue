@@ -16,9 +16,11 @@
   ============================================================
 -->
 <template>
-  <!-- 消息滚动容器，ref 用于父组件或内部方法控制滚动 -->
-  <div ref="messagesEl" class="messages-area">
-    <!-- 空状态：消息列表为空时显示欢迎提示 -->
+  <!-- 聊天主体：包含滚动消息区 + 右侧问题导航 -->
+  <div class="chat-body">
+    <!-- 消息滚动容器，ref 用于父组件或内部方法控制滚动 -->
+    <div ref="messagesEl" class="messages-area">
+      <!-- 空状态：消息列表为空时显示欢迎提示 -->
     <div v-if="messages.length === 0" class="empty-state">
       <div class="empty-icon">✦</div>
       <h2>{{ $t('chat.empty') }}</h2>
@@ -27,7 +29,14 @@
 
     <!-- 消息列表：遍历 messages 渲染每条消息 -->
     <div v-else class="messages-list">
-      <div v-for="(msg, i) in messages" :key="i" class="message-row" :class="msg.role">
+      <div
+        v-for="(msg, i) in messages"
+        :key="i"
+        class="message-row"
+        :class="msg.role"
+        :data-idx="i"
+        :data-role="msg.role"
+      >
         <!-- AI 消息头像（仅 assistant 角色显示） -->
         <div v-if="msg.role === 'assistant'" class="avatar ai-avatar">✦</div>
         <!-- 消息内容区域，根据角色绑定不同样式类 -->
@@ -63,6 +72,21 @@
         </div>
       </div>
     </div>
+    </div>
+
+    <!-- 右侧问题导航：根据 user 消息生成锚点，点击可跳转到对应问题 -->
+    <aside v-if="questions.length" class="qnav">
+      <button
+        v-for="q in questions"
+        :key="q.key"
+        class="qnav-btn"
+        type="button"
+        :title="q.title"
+        @click="jumpTo(q.idx)"
+      >
+        {{ q.label }}
+      </button>
+    </aside>
   </div>
 
   <!-- 图片附件预览区：用户已选择图片但尚未发送时显示 -->
@@ -144,7 +168,7 @@
 </template>
 
 <script setup>
-import { ref, watch, nextTick } from 'vue'
+import { ref, watch, nextTick, computed } from 'vue'
 import { useMarkdown } from '@/composables/useMarkdown'
 
 /**
@@ -192,6 +216,39 @@ const { renderContent } = useMarkdown()
 
 /** 消息滚动容器的 DOM 引用 */
 const messagesEl = ref(null)
+
+/**
+ * 右侧问题导航：提取所有 user 消息作为“问题锚点”。
+ * - label：显示序号（Q1/Q2...）
+ * - title：tooltip 使用问题前 40 字
+ */
+const questions = computed(() => {
+  const out = []
+  let n = 0
+  for (let i = 0; i < (props.messages || []).length; i++) {
+    const m = props.messages[i]
+    if (m?.role !== 'user') continue
+    n++
+    const content = (m.content || '').trim().replace(/\s+/g, ' ')
+    out.push({
+      key: `q-${i}`,
+      idx: i,
+      label: `Q${n}`,
+      title: content.slice(0, 40) || '（空）',
+    })
+  }
+  return out
+})
+
+/**
+ * 跳转到指定消息（问题）
+ * - 在 messages-area 内找到对应 data-idx 的元素并滚动到可视区顶部
+ */
+const jumpTo = (idx) => {
+  const el = messagesEl.value?.querySelector(`.message-row[data-idx="${idx}"]`)
+  if (!el) return
+  el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
 
 /** 文本输入框的 DOM 引用 */
 const inputEl = ref(null)
