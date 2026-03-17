@@ -313,276 +313,57 @@
 
 <script setup>
 /**
- * SettingsPage.vue - 设置页面
+ * @file src/features/settings/pages/SettingsPage.vue
+ * @description 设置页（UI 组织层）
  *
- * 功能模块：
- *  1. API 连接配置（Base URL / API Key）
- *  2. 模型检测与选择
- *  3. 测试连接（发送一条测试消息验证可用性）
- *  4. 对话参数设置（模型 / System Prompt / 温度 / 上下文长度 / Enter 发送）
- *  5. TTS 语音设置
- *  6. 图片生成设置
- *  7. 外观设置（主题 / 字体大小）
- *  8. 语言切换
- *  9. 危险操作（清除本地数据）
+ * 设计原则：
+ * - 页面只负责模板结构和样式；
+ * - 业务逻辑全部在 useSettingsPage composable 中，便于维护与测试。
  */
-import { computed, ref, onMounted, onUnmounted } from 'vue'
-import { useI18n } from 'vue-i18n'
+
 import FancySelect from '@/components/ui/FancySelect.vue'
-import { settings, resetSettings } from '@/stores/settings'
-import { LANGUAGES } from '@/i18n'
-import { useModal } from '@/composables/useModal'
-import { fetchModels, sendChatMessage } from '@/services/api'
-import { normalizeBaseUrl } from '@/services/apiClient'
+import { useSettingsPage } from '@/features/settings/composables/useSettingsPage'
 
-/** i18n：t 为翻译函数，locale 为当前语言 ref */
-const { t, locale } = useI18n()
-/** 当前激活的语言代码（计算属性，响应式） */
-const currentLocale = computed(() => locale.value)
-/** 模态确认框 composable */
-const { confirm } = useModal()
-/** 模型检测加载状态 */
-const detecting = ref(false)
-/** 模型检测错误信息 */
-const detectError = ref('')
+const {
+  t,
+  settings,
+  LANGUAGES,
 
-// ── 测试连接状态 ──────────────────────────────────────────
-/** 测试请求是否进行中 */
-const testing = ref(false)
-/** 测试结果状态：'' = 未测试 | 'ok' = 成功 | 'fail' = 失败 */
-const testStatus = ref('') // '' | 'ok' | 'fail'
-/** 测试成功后的结果详情：{ latency, model, reply } */
-const testResult = ref(null)
-/** 测试失败时的错误信息 */
-const testError = ref('')
+  // url
+  normalizedUrl,
+  showNormalized,
+  isOldApi,
+  migrateToOpenRouter,
 
-/**
- * 清理错误信息，去掉 HTML 标签并截短到 120 字符。
- * 特殊处理：Cloudflare 拦截时给出友好提示。
- *
- * @param {string} msg - 原始错误消息
- * @returns {string} 清理后的错误文本
- */
-const cleanError = (msg) => {
-  if (!msg) return ''
-  // 去除所有 HTML 标签（某些 API 返回 HTML 错误页）
-  const text = String(msg).replace(/<[^>]*>/g, '').trim()
-  // Cloudflare 拦截场景：给出具体操作建议
-  if (text.includes('Just a moment') || text.includes('challenge') || text.includes('Cloudflare')) {
-    return '该接口需要浏览器验证（Cloudflare 拦截），请直接在浏览器中访问后再试，或更换其他接口'
-  }
-  // 截短，避免错误信息过长影响 UI
-  return text.slice(0, 120)
-}
+  // api key
+  showKey,
 
-/**
- * 执行连接测试：发送一条极简消息（Hi, reply with exactly one word: OK）
- * 通过流式接口验证 URL / Key / 模型三者是否均可用。
- * 记录延迟、模型 ID 和实际回复内容。
- */
-// 批量测试结果（按模型）
-const testAllResults = ref([]) // Array<{model, ok, latency, reply, error}>
+  // model detect/test
+  detecting,
+  detectError,
+  runDetect,
+  testing,
+  testStatus,
+  testError,
+  testAllResults,
+  runTestAll,
+  openGroups,
+  groupedEntries,
+  toggleGroup,
+  cleanError,
 
-/**
- * 一键测试全部模型：对 detectedModels 里的每个模型发送同一条极简消息。
- * - 成功：记录 latency + reply
- * - 失败：记录 error，并在 UI 标红
- *
- * 注意：为了避免并发把服务商打爆，这里串行执行。
- */
-const runTestAll = async () => {
-  testing.value = true
-  testStatus.value = ''
-  testAllResults.value = []
-  testError.value = ''
+  // i18n
+  currentLocale,
+  switchLang,
 
-  const models = (settings.detectedModels || []).map(m => m.id)
-  if (!models.length) {
-    testing.value = false
-    return
-  }
+  // ui options
+  themes,
+  fontSizes,
 
-  let hasFail = false
-  try {
-    for (const model of models) {
-      const t0 = Date.now()
-      let reply = ''
-      try {
-        await sendChatMessage({
-          messages: [{ role: 'user', content: 'Hi, reply with exactly one word: OK' }],
-          model,
-          temperature: 0,
-          onChunk: (c) => { reply += c },
-        })
-        testAllResults.value.push({ model, ok: true, latency: Date.now() - t0, reply: reply.trim().slice(0, 80), error: '' })
-      } catch (e) {
-        hasFail = true
-        testAllResults.value.push({ model, ok: false, latency: Date.now() - t0, reply: '', error: e.message || String(e) })
-      }
-    }
-
-    testStatus.value = hasFail ? 'fail' : 'ok'
-    if (hasFail) testError.value = '部分模型测试失败（已标红）'
-  } finally {
-    testing.value = false
-  }
-}
-
-// ── 页面滚动控制 ──────────────────────────────────────────
-/**
- * 进入设置页时解锁页面滚动（主页面可能锁定了 overflow）。
- * 离开设置页时恢复 overflow: hidden，防止主页面出现滚动条。
- */
-onMounted(() => {
-  document.documentElement.style.overflow = 'auto'
-  document.body.style.overflow = 'auto'
-})
-onUnmounted(() => {
-  document.documentElement.style.overflow = 'hidden'
-  document.body.style.overflow = 'hidden'
-})
-
-// ── URL 规范化预览 ─────────────────────────────────────────
-/** 规范化后的 URL，当与输入不同时显示在输入框下方作为提示 */
-const normalizedUrl = ref('')
-
-/**
- * 失焦时对输入的 Base URL 进行规范化处理，
- * 若结果与原始输入不同则在界面上提示用户。
- * （实际请求使用规范化后的 URL，此处仅用于预览）
- */
-const showNormalized = () => {
-  const n = normalizeBaseUrl(settings.apiBaseUrl)
-  // 只有规范化结果与原始输入不同才显示提示，相同则清空提示
-  normalizedUrl.value = (n && n !== settings.apiBaseUrl) ? n : ''
-}
-
-// ── 旧接口迁移 ────────────────────────────────────────────
-/** 已知的旧接口域名列表，用于判断是否需要迁移 */
-const OLD_APIS = ['s2a.dgtw.de', 'openrouter.ai']
-
-/** 计算属性：检测当前 Base URL 是否包含旧接口域名 */
-const isOldApi = computed(() => OLD_APIS.some(a => settings.apiBaseUrl?.includes(a)))
-
-/**
- * 一键迁移到新接口：将 URL / Key / 模型全部重置为新默认值，
- * 并清空已检测的模型列表和 URL 规范化提示。
- */
-const migrateToOpenRouter = () => {
-  settings.apiBaseUrl = 'https://api.yexc.top'
-  settings.apiKey = 'sk-M0u9pvjqujqT5Z50qz2ek6BGzjcqUjychYq6bleeJosVokAU'
-  settings.defaultModel = 'claude-sonnet-4.5'
-  settings.detectedModels = [] // 清空旧接口检测到的模型列表
-  normalizedUrl.value = ''    // 清空 URL 提示
-}
-
-// ── API Key 显示/隐藏 ─────────────────────────────────────
-/** 控制 API Key 输入框是否明文显示 */
-const showKey = ref(false)
-
-// ── 模型检测与分组 ────────────────────────────────────────
-/** 记录各分组的展开/折叠状态，key 为组名，value 为 boolean */
-const openGroups = ref({})
-
-/**
- * 将检测到的模型列表按 group 字段分组，返回 { 组名: [模型...] } 的对象。
- */
-const groupedModels = computed(() => {
-  const map = {}
-  for (const m of settings.detectedModels) {
-    if (!map[m.group]) map[m.group] = []
-    map[m.group].push(m)
-  }
-  return map
-})
-
-/** 将分组对象转为 [组名, 模型数组][] 的数组，方便 v-for 遍历 */
-const groupedEntries = computed(() => Object.entries(groupedModels.value))
-
-/**
- * 切换指定分组的展开/折叠状态。
- * @param {string} name - 分组名称
- */
-const toggleGroup = (name) => {
-  openGroups.value[name] = !openGroups.value[name]
-}
-
-/**
- * 执行模型检测：调用 API 的 /models 接口获取可用模型列表。
- * 检测成功后：
- *  1. 将模型列表存入 settings.detectedModels（自动触发持久化）
- *  2. 默认展开第一个分组
- *  3. 若当前未选择模型，自动选中第一个检测到的模型
- */
-const runDetect = async () => {
-  detecting.value = true
-  detectError.value = ''
-  try {
-    const models = await fetchModels(settings.apiBaseUrl, settings.apiKey)
-    if (models.length) {
-      settings.detectedModels = models
-      const first = models[0]?.group
-      if (first) openGroups.value[first] = true
-      if (!settings.defaultModel && models[0]) settings.defaultModel = models[0].id
-    }
-  } catch (e) {
-    detectError.value = cleanError(e.message || String(e))
-  } finally {
-    detecting.value = false
-  }
-}
-
-// ── 语言切换 ──────────────────────────────────────────────
-/**
- * 切换界面语言。
- * 同时更新 vue-i18n 的 locale 和 localStorage 持久化存储。
- *
- * @param {string} code - 语言代码，如 'zh' / 'en' / 'ja'
- */
-const switchLang = (code) => {
-  locale.value = code                       // 实时切换 i18n 语言
-  localStorage.setItem('ai-chat-lang', code) // 持久化，下次打开仍生效
-}
-
-// ── 主题与字体配置数据 ────────────────────────────────────
-/**
- * 主题选项列表，用于模板中渲染主题选择按钮。
- * style 字段为主题预览方块的内联样式。
- */
-const themes = [
-  { value: 'light',  labelKey: 'settings.themeLight',  style: 'background:#fff;border:1px solid #ddd;' },
-  { value: 'dark',   labelKey: 'settings.themeDark',   style: 'background:#1a1a1a;' },
-  { value: 'system', labelKey: 'settings.themeSystem', style: 'background:linear-gradient(135deg,#fff 50%,#1a1a1a 50%);border:1px solid #ddd;' },
-]
-
-/**
- * 字体大小选项列表，用于渲染三个"A"大小按钮。
- * cls 字段对应 CSS 类名（fs-sm / fs-md / fs-lg），控制按钮内"A"字的视觉大小。
- */
-const fontSizes = [
-  { value: 'sm', cls: 'fs-sm' },
-  { value: 'md', cls: 'fs-md' },
-  { value: 'lg', cls: 'fs-lg' },
-]
-
-// ── 危险操作：重置 / 清除数据 ─────────────────────────────
-/**
- * 弹出确认框后重置所有设置为默认值。
- * 使用 useModal 的 confirm() 以保证用户有意为之。
- */
-const confirmReset = async () => {
-  const ok = await confirm({ icon: '🔄', title: t('common.reset'), message: t('settings.resetConfirm'), type: 'warning' })
-  if (ok) resetSettings() // 确认后调用 store 的 resetSettings
-}
-
-/**
- * 弹出确认框后清除所有 localStorage 数据并刷新页面。
- * 此操作不可恢复，需经过二次确认。
- */
-const clearData = async () => {
-  const ok = await confirm({ icon: '🗑️', title: t('settings.clearData'), message: t('settings.clearConfirm'), type: 'danger', confirmText: t('settings.clearDataBtn') })
-  if (ok) { localStorage.clear(); location.reload() } // 清空全部本地存储后强制刷新
-}
+  // dangerous
+  confirmReset,
+  clearData,
+} = useSettingsPage()
 </script>
 
 <style>
