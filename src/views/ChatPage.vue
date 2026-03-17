@@ -1,6 +1,6 @@
 <!--
   ============================================================
-  文件说明：AIChat.vue
+  文件说明：ChatPage.vue（主页）
   功能：应用主入口组件，负责整体布局与多模式功能协调。
   包含：
     - 侧边栏（AppSidebar）展开/收起
@@ -135,6 +135,16 @@
 </template>
 
 <script setup>
+/**
+ * @file src/views/ChatPage.vue
+ * @description 应用主页（多模式工作台）
+ *
+ * 主要负责：
+ * - 顶部 Topbar（当前模式标题 / 模型选择 / 设置入口）
+ * - 侧边栏（模式切换）
+ * - 四个功能视图的渲染与状态协调：聊天 / 文生图 / 语音转文字 / 文字转语音
+ * - 聊天流式发送、停止、重新回答、上下文拼接等核心业务逻辑
+ */
 import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import AppSidebar from '@/components/layout/AppSidebar.vue'

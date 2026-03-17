@@ -57,6 +57,21 @@
 </template>
 
 <script setup>
+/**
+ * @file src/components/ui/FancySelect.vue
+ * @description 自绘下拉选择器（替代原生 <select>）
+ *
+ * 设计目标：
+ * - 原生 <select> 的“展开面板”样式不可控且平台差异大
+ * - FancySelect 通过自绘面板实现统一体验，并解决：
+ *   - z-index / overflow 裁剪（通过 Teleport 到 body + fixed 定位）
+ *   - 选项分组（group header）
+ *   - 可选 icon（如国旗 SVG）对齐
+ *
+ * 注意：
+ * - 为了避免父容器裁剪，弹层不在组件树内渲染，而是 Teleport 到 body。
+ * - 因此 outside-click 判断需同时检查 rootEl 与 popEl。
+ */
 import { computed, onBeforeUnmount, onMounted, nextTick, ref } from 'vue'
 
 const props = defineProps({
@@ -115,15 +130,19 @@ const choose = (v) => {
   open.value = false
 }
 
+/**
+ * 计算弹层位置（fixed）
+ * - left/top/width 通过触发按钮的 boundingClientRect 计算
+ * - 默认向下展开，若下方空间不足则向上展开
+ * - 限制左右边距，避免出屏
+ */
 const updatePopPos = () => {
   if (!rootEl.value) return
   const trigger = rootEl.value.querySelector('.fs-trigger')
   if (!trigger) return
   const r = trigger.getBoundingClientRect()
 
-  // 固定定位，避免受任何父容器影响
   const width = Math.max(r.width, 220)
-  // 默认向下展开；若底部空间不足则向上
   const preferDownTop = r.bottom + 8
   const maxH = 260
   const viewportH = window.innerHeight
