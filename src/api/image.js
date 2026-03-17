@@ -23,6 +23,7 @@ const TAG = '[Image API]'
  * @returns {Promise<string>} 生成图片的 URL 或 base64 数据
  * @throws {ApiError} 请求失败时抛出
  */
+/** generateImage：调用 /images/generations 返回图片 URL/base64 */
 export async function generateImage({ prompt, model, size = '1024x1024', quality = 'standard' }) {
   const baseUrl = normalizeBaseUrl(settings.apiBaseUrl)
   const apiKey  = settings.apiKey

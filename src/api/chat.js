@@ -26,6 +26,7 @@ const TAG = '[Chat API]'
  * @returns {Promise<void>}
  * @throws {ApiError} 请求失败、超时、CF 拦截时抛出
  */
+/** sendChatMessage：统一聊天流式请求入口（Anthropic/Gemini/OpenAI兼容） */
 export async function sendChatMessage({ messages, model, temperature, signal, onChunk }) {
   // 规范化 Base URL，确保不会出现 ".../v1/v1" 或尾部多余斜杠
   const baseUrl  = normalizeBaseUrl(settings.apiBaseUrl)

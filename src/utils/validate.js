@@ -42,6 +42,11 @@ export function isValidUrl(url) {
  * isValidApiKey('short')             // false
  * isValidApiKey('has space key')     // false
  */
+/**
+ * isValidApiKey：简单校验 API Key（非严格）
+ * @param {string} key
+ * @returns {boolean}
+ */
 export function isValidApiKey(key) {
   if (!key || typeof key !== 'string') return false
 
@@ -63,9 +68,15 @@ export function isValidApiKey(key) {
  * isEmpty(false)       // false
  * isEmpty('hello')     // false
  */
+/** isEmpty：空值判断 */
 export function isEmpty(val) {
   if (val === null || val === undefined) return true
   if (typeof val === 'string') return val.trim() === ''
+  return false
+}
+e
+}
+ === ''
   return false
 }
 e

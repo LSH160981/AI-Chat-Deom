@@ -57,6 +57,7 @@ export function formatDuration(ms) {
  * truncate('Hi', 10)             // "Hi"
  * truncate('', 10)               // ""
  */
+/** truncate：截断字符串 */
 export function truncate(str, len, ellipsis = '...') {
   if (!str || typeof str !== 'string') return ''
   if (len <= 0) return ''

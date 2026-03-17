@@ -58,6 +58,7 @@ export async function transcribeAudio(audioFile) {
  * @returns {Promise<string>}             音频 ObjectURL
  * @throws {ApiError}                     请求失败时抛出
  */
+/** synthesizeSpeech：调用 TTS 接口并返回 ObjectURL */
 export async function synthesizeSpeech({ text, voice = 'alloy', model = 'tts-1' }) {
   const baseUrl = normalizeBaseUrl(settings.apiBaseUrl)
   const apiKey  = settings.apiKey

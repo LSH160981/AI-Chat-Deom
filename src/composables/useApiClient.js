@@ -65,6 +65,11 @@ const PROVIDER_RULES = [
  * @param {string} raw - 用户输入的原始 Base URL
  * @returns {string} 规范化后的 Base URL，若输入为空则返回空字符串
  */
+/**
+ * 规范化（智能补全）API Base URL
+ * @param {string} raw
+ * @returns {string}
+ */
 export function normalizeBaseUrl(raw) {
   if (!raw || !raw.trim()) return ''
   let url = raw.trim().replace(/\/+$/, '') // 去尾部斜杠，避免路径拼接出现双斜杠
@@ -109,6 +114,7 @@ export function detectProvider(baseUrl) {
  * @param {string} provider - 服务商类型（'anthropic' | 'openai' | 'openrouter' 等）
  * @returns {Object} 构建好的请求头对象
  */
+/** buildHeaders：按 provider 构建鉴权请求头 */
 export function buildHeaders(apiKey, provider) {
   const h = { 'Content-Type': 'application/json' } // 基础 JSON 请求头
   if (provider === 'anthropic') {
@@ -146,6 +152,10 @@ export function buildHeaders(apiKey, provider) {
  * @param {Function} params.onChunk     - 每收到一段文本时的回调，参数为文本片段字符串
  * @returns {Promise<void>}
  * @throws {Error} 接口返回非 2xx 状态码或流解析失败时抛出错误
+ */
+/**
+ * chatStream（历史实现/参考）：流式聊天（SSE）
+ * @param {object} params
  */
 export async function chatStream({ messages, model, temperature, signal, onChunk }) {
   const baseUrl = normalizeBaseUrl(settings.apiBaseUrl) // 规范化用户配置的 Base URL
@@ -239,6 +249,9 @@ export async function chatStream({ messages, model, temperature, signal, onChunk
  * @returns {Promise<string>} 生成图片的 URL 或 base64 数据（b64_json）
  * @throws {Error} 接口返回非 2xx 状态码时抛出
  */
+/**
+ * generateImage（历史实现/参考）：文生图
+ */
 export async function generateImage({ prompt, model, size = '1024x1024', quality = 'standard' }) {
   const baseUrl = normalizeBaseUrl(settings.apiBaseUrl)
   const apiKey  = settings.apiKey
@@ -290,6 +303,9 @@ export async function transcribeAudio(blob) {
  * @returns {Promise<string>} 音频的 ObjectURL，可直接赋值给 <audio> 的 src
  * @throws {Error} 接口返回非 2xx 状态码时抛出
  */
+/**
+ * synthesizeSpeech（历史实现/参考）：文字转语音
+ */
 export async function synthesizeSpeech({ text, voice = 'alloy', model = 'tts-1' }) {
   const baseUrl = normalizeBaseUrl(settings.apiBaseUrl)
   const apiKey  = settings.apiKey
@@ -302,3 +318,4 @@ export async function synthesizeSpeech({ text, voice = 'alloy', model = 'tts-1' 
   const ab = await resp.arrayBuffer()                              // 读取二进制音频数据
   return URL.createObjectURL(new Blob([ab], { type: 'audio/mpeg' })) // 转为 ObjectURL 供播放器使用
 }
+
