@@ -253,9 +253,9 @@
         <div class="setting-item col">
           <div class="setting-info">
             <label>图片模型 ID</label>
-            <p>如 dall-e-3、gpt-image-1，需服务商支持</p>
+            <p>不同服务商支持不同图像模型：如果生成失败，请先点「检测」确认该服务商是否提供图像模型（很多中转只提供对话模型）。</p>
           </div>
-          <input v-model="settings.imageModel" class="s-input" placeholder="dall-e-3" />
+          <input v-model="settings.imageModel" class="s-input" placeholder="例如：gpt-image-1 / dall-e-3（需服务商支持）" />
         </div>
 
         <!-- 图片尺寸选择 -->

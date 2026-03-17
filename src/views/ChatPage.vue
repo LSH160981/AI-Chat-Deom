@@ -372,9 +372,20 @@ const generateImage = async () => {
   isLoading.value = true
   generatedImages.value = []    // 清空上一次结果
   try {
+    // 未配置图像模型时直接提示（避免默认走 dall-e-3 导致 503/找不到渠道）
+    if (!settings.imageModel) {
+      await alert({
+        icon: '⚙️',
+        title: '未配置图片模型',
+        message: '当前接口可能不支持默认图片模型。请到设置页填写可用的 image model ID，或更换支持文生图的服务商。',
+        showCancel: false,
+      })
+      return
+    }
+
     const url = await apiGenerateImage({
       prompt,
-      model: settings.imageModel || 'dall-e-3',       // 图像生成模型
+      model: settings.imageModel,                     // 图像生成模型（用户配置）
       size: settings.imageSize || '1024x1024',         // 图像尺寸
       quality: settings.imageQuality || 'standard',    // 图像质量
     })
