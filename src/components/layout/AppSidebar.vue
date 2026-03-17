@@ -7,7 +7,7 @@
 
   说明：
     - 设置入口已移动到主页右上角
-    - 模型选择已移动到主页顶部（AI 对话标题旁）
+    - 模型选择已移动到主页顶部
   ============================================================
 -->
 <template>
@@ -64,42 +64,19 @@
       </div>
     </div>
 
-    <div class="sidebar-divider"></div>
-
-    <!-- 功能切换列表：遍历 CHAT_MODES 配置生成按钮 -->
-    <div class="mode-list">
-      <button
-        v-for="m in CHAT_MODES"
-        :key="m.id"
-        class="mode-item"
-        :class="{ active: currentMode === m.id }"
-        @click="$emit('update:currentMode', m.id); $emit('close')"
-        type="button"
-      >
-        <!-- 模式图标 -->
-        <span class="mode-icon">{{ m.icon }}</span>
-        <!-- 模式名称（i18n） -->
-        <span>{{ $t('modes.' + m.id) }}</span>
-      </button>
-    </div>
-
-    <div class="sidebar-divider"></div>
   </aside>
 </template>
 
 <script setup>
-import { CHAT_MODES } from '@/constants/models'
 
 /**
  * Props 定义
  * @prop {Boolean} open             - 侧边栏是否展开
- * @prop {String}  currentMode      - 当前功能模式 ID
  * @prop {Array}   sessions         - 会话列表（仅聊天使用）
  * @prop {String}  activeSessionId  - 当前激活会话 id
  */
 defineProps({
   open: Boolean,
-  currentMode: String,
   sessions: { type: Array, default: () => [] },
   activeSessionId: { type: String, default: '' },
 })
@@ -109,7 +86,6 @@ defineProps({
  * close                 - 请求关闭侧边栏
  * newChat               - 新建会话
  * selectSession         - 选择会话（切换历史对话）
- * update:currentMode    - 更新功能模式（v-model:currentMode）
  */
 defineEmits([
   'close',
@@ -117,7 +93,6 @@ defineEmits([
   'selectSession',
   'renameSession',
   'deleteSession',
-  'update:currentMode',
 ])
 </script>
 

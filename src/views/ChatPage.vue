@@ -12,10 +12,9 @@
 -->
 <template>
   <div class="chat-app">
-    <!-- 侧边栏：传入 open 状态及双向绑定的模式/模型/系统提示 -->
+    <!-- 侧边栏：传入 open 状态 + 会话管理 -->
     <AppSidebar
       :open="sidebarOpen"
-      v-model:currentMode="currentMode"
       :sessions="sessions"
       :activeSessionId="activeSessionId"
       @selectSession="selectSession"
@@ -35,13 +34,12 @@
         <button class="icon-btn topbar-menu-btn" @click="sidebarOpen = !sidebarOpen" :title="$t('common.menu')">
           <AppIcon name="menu" :size="18" />
         </button>
-        <!-- 当前模式标题 -->
+        <!-- 标题（单一对话模式不再单独展示） -->
         <div class="topbar-title-row">
-          <span class="topbar-title">{{ currentModeLabel }}</span>
 
-          <!-- 仅聊天模式显示模型选择（在标题旁边） -->
+          <!-- 模型选择 -->
           <FancySelect
-            v-if="currentMode === MODE.CHAT && settings.detectedModels?.length"
+            v-if="settings.detectedModels?.length"
             class="topbar-model-fancy"
             :modelValue="selectedModel"
             @update:modelValue="(v) => selectedModel = v"
@@ -50,7 +48,7 @@
           />
 
           <input
-            v-else-if="currentMode === MODE.CHAT"
+            v-else
             class="topbar-model-input"
             :value="selectedModel"
             @input="selectedModel = $event.target.value"
@@ -78,7 +76,6 @@
         ref="chatViewRef" 用于父组件调用子组件暴露的方法（滚动/聚焦/重置）
       -->
       <ChatView
-        v-if="currentMode === MODE.CHAT"
         ref="chatViewRef"
         :messages="messages"
         :isLoading="isLoading"
@@ -113,7 +110,6 @@ import ChatView from '@/components/chat/ChatView.vue'
 import { useModal } from '@/composables/useModal'
 import FancySelect from '@/components/ui/FancySelect.vue'
 import { sendChatMessage } from '@/api'
-import { CHAT_MODES } from '@/constants/models'
 import { settings } from '@/stores/settings'
 import { storage } from '@/utils/storage'
 
@@ -139,10 +135,6 @@ const modelSelectItems = computed(() => {
   return items
 })
 
-/** 功能模式 ID 常量，避免散落的魔法字符串 */
-const MODE = {
-  CHAT: 'chat',
-}
 
 // 国际化翻译函数
 const { t } = useI18n()
@@ -241,9 +233,6 @@ const generateSessionTitle = async () => {
     // 标题生成失败不影响主流程
   }
 }
-
-/** 当前功能模式：仅保留 chat */
-const currentMode = ref(MODE.CHAT)
 
 /** 侧边栏是否打开 */
 const sidebarOpen = ref(false)
@@ -394,12 +383,6 @@ const regenerateLast = async () => {
 
 
 /**
- * computed：当前模式的显示标签
- * 从 CHAT_MODES 配置中根据 currentMode.id 查找对应 label
- */
-const currentModeLabel = computed(() => CHAT_MODES.find(m => m.id === currentMode.value)?.label || '')
-
-/**
  * 开始新对话：清空消息列表、输入内容、附件，并中断正在进行的流式请求
  */
 const selectSession = async (id) => {
@@ -414,11 +397,9 @@ const selectSession = async (id) => {
   abortController?.abort()
 
   // 切换会话后：自动滚到底 + 聚焦（用户下一步大概率继续输入）
-  if (currentMode.value === MODE.CHAT) {
-    await nextTick()
-    chatViewRef.value?.scrollToBottom()
-    await focusChatInput()
-  }
+  await nextTick()
+  chatViewRef.value?.scrollToBottom()
+  await focusChatInput()
 }
 
 const createNewSession = async () => {
@@ -427,11 +408,9 @@ const createNewSession = async () => {
   await selectSession(id)
 
   // 新建会话后强制滚到底 + 聚焦（明确的“开始输入”意图）
-  if (currentMode.value === MODE.CHAT) {
-    await nextTick()
-    chatViewRef.value?.scrollToBottom()
-    await focusChatInput()
-  }
+  await nextTick()
+  chatViewRef.value?.scrollToBottom()
+  await focusChatInput()
 }
 
 /**
@@ -494,9 +473,7 @@ const newChat = async () => {
   abortController?.abort()
 
   // 清空当前会话后自动聚焦（用户下一步大概率继续输入）
-  if (currentMode.value === MODE.CHAT) {
-    await focusChatInput()
-  }
+  await focusChatInput()
 }
 
 
@@ -594,3 +571,4 @@ const sendMessage = async () => {
 .no-api-inner a { color: #60a5fa; text-decoration: none; font-weight: 500; }
 .no-api-inner a:hover { text-decoration: underline; }
 </style>
+tyle>
