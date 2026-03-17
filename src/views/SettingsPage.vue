@@ -386,7 +386,7 @@ import { computed, ref, onMounted, onUnmounted } from 'vue'
 import { settings, resetSettings } from '@/stores/settings'
 import { LANGUAGES } from '@/i18n'
 import { useModal } from '@/composables/useModal'
-import { useModelDetector } from '@/composables/useModelDetector'
+import { fetchModels } from '@/api'
 import { normalizeBaseUrl } from '@/composables/useApiClient'
 
 /** i18n：t 为翻译函数，locale 为当前语言 ref */
@@ -395,10 +395,12 @@ const { t, locale } = useI18n()
 const currentLocale = computed(() => locale.value)
 /** 模态确认框 composable */
 const { confirm } = useModal()
-/** 模型自动检测 composable：detect 执行检测，detecting 加载状态，detectError 错误信息 */
-const { detect, detecting, error: detectError } = useModelDetector()
-/** chatStream：流式发送消息，用于测试连接功能 */
-import { chatStream } from '@/composables/useApiClient'
+/** 模型检测加载状态 */
+const detecting = ref(false)
+/** 模型检测错误信息 */
+const detectError = ref('')
+/** sendChatMessage：流式发送消息，用于测试连接功能 */
+import { sendChatMessage } from '@/api'
 
 // ── 测试连接状态 ──────────────────────────────────────────
 /** 测试请求是否进行中 */
@@ -443,7 +445,7 @@ const runTest = async () => {
   const t0 = Date.now() // 记录开始时间，用于计算延迟
   let reply = ''
   try {
-    await chatStream({
+    await sendChatMessage({
       messages: [{ role: 'user', content: 'Hi, reply with exactly one word: OK' }],
       model,
       temperature: 0, // 温度设为 0，确保回复确定性，避免干扰测试结果
@@ -551,16 +553,20 @@ const toggleGroup = (name) => {
  *  3. 若当前未选择模型，自动选中第一个检测到的模型
  */
 const runDetect = async () => {
-  const models = await detect(settings.apiBaseUrl, settings.apiKey)
-  if (models.length) {
-    settings.detectedModels = models
-    // 默认展开第一组，方便用户直接看到结果
-    const first = models[0]?.group
-    if (first) openGroups.value[first] = true
-    // 如果当前没选模型，自动选第一个
-    if (!settings.defaultModel && models[0]) {
-      settings.defaultModel = models[0].id
+  detecting.value = true
+  detectError.value = ''
+  try {
+    const models = await fetchModels(settings.apiBaseUrl, settings.apiKey)
+    if (models.length) {
+      settings.detectedModels = models
+      const first = models[0]?.group
+      if (first) openGroups.value[first] = true
+      if (!settings.defaultModel && models[0]) settings.defaultModel = models[0].id
     }
+  } catch (e) {
+    detectError.value = cleanError(e.message || String(e))
+  } finally {
+    detecting.value = false
   }
 }
 

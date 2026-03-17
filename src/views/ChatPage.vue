@@ -121,7 +121,7 @@ import SpeechToTextView from '@/components/chat/SpeechToTextView.vue'
 import TextToSpeechView from '@/components/chat/TextToSpeechView.vue'
 import { useRecorder } from '@/composables/useRecorder'
 import { useModal } from '@/composables/useModal'
-import { chatStream, generateImage as apiGenerateImage, transcribeAudio, synthesizeSpeech } from '@/composables/useApiClient'
+import { sendChatMessage, generateImage as apiGenerateImage, transcribeAudio, synthesizeSpeech } from '@/api'
 import { CHAT_MODES } from '@/constants/models'
 import { settings } from '@/stores/settings'
 
@@ -274,7 +274,7 @@ const sendMessage = async () => {
   abortController = new AbortController() // 创建新的中断控制器
 
   try {
-    await chatStream({
+    await sendChatMessage({
       messages: history,
       model,
       temperature: settings.temperature,
