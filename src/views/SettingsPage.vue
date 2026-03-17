@@ -322,11 +322,12 @@
             <label>{{ $t('settings.sectionLanguage') }}</label>
             <p>切换界面语言</p>
           </div>
-          <select class="s-select" :value="currentLocale" @change="switchLang($event.target.value)">
-            <option v-for="lang in LANGUAGES" :key="lang.code" :value="lang.code">
-              {{ lang.flag }} {{ lang.label }}
-            </option>
-          </select>
+          <FancySelect
+            :modelValue="currentLocale"
+            @update:modelValue="switchLang"
+            :items="LANGUAGES.map(l => ({ value: l.code, label: l.label, icon: l.flag }))"
+            placeholder="选择语言"
+          />
         </div>
       </section>
 
@@ -388,6 +389,7 @@
  */
 import { computed, ref, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
+import FancySelect from '@/components/ui/FancySelect.vue'
 import { settings, resetSettings } from '@/stores/settings'
 import { LANGUAGES } from '@/i18n'
 import { useModal } from '@/composables/useModal'
