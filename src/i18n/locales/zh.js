@@ -15,6 +15,7 @@ export default {
     settings: '设置',
     newChat: '新对话',
     autoSaved: '设置自动保存',
+    menu: '菜单',
   },
 
   // 侧边栏模式

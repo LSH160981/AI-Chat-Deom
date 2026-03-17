@@ -14,6 +14,7 @@ export default {
     settings: 'Настройки',
     newChat: 'Новый чат',
     autoSaved: 'Настройки сохраняются автоматически',
+    menu: 'Меню',
   },
   modes: {
     chat: 'AI Чат',

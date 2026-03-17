@@ -14,6 +14,7 @@ export default {
     settings: '設定',
     newChat: '新しいチャット',
     autoSaved: '設定は自動保存されます',
+    menu: 'メニュー',
   },
   modes: {
     chat: 'AI チャット',

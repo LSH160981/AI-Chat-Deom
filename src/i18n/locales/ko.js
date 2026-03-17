@@ -14,6 +14,7 @@ export default {
     settings: '설정',
     newChat: '새 대화',
     autoSaved: '설정이 자동 저장되었습니다',
+    menu: '메뉴',
   },
   modes: {
     chat: 'AI 대화',

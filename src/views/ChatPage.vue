@@ -32,7 +32,7 @@
       <!-- 顶部导航栏 -->
       <header class="topbar">
         <!-- 汉堡菜单按钮：切换侧边栏开关 -->
-        <button class="icon-btn topbar-menu-btn" @click="sidebarOpen = !sidebarOpen">
+        <button class="icon-btn topbar-menu-btn" @click="sidebarOpen = !sidebarOpen" :title="$t('common.menu')">
           <AppIcon name="menu" :size="18" />
         </button>
         <!-- 当前模式标题 -->
@@ -60,6 +60,11 @@
             placeholder="模型ID…"
           />
         </div>
+        <!-- 设置入口：右上角 -->
+        <router-link class="icon-btn" to="/settings" :title="$t('common.settings')">
+          <AppIcon name="settings" :size="16" />
+        </router-link>
+
         <!-- 清空按钮：仅在聊天模式且有消息时显示 -->
         <button v-if="currentMode === MODE.CHAT && messages.length > 0" class="icon-btn" @click="newChat" :title="$t('common.clear')">
           <AppIcon name="trash" :size="16" />
