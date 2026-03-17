@@ -353,7 +353,10 @@ const focusChatInput = async () => {
 }
 
 // 页面首次进入时自动聚焦输入框（移动端/部分浏览器可能因策略限制而不生效）
-onMounted(() => {
+onMounted(async () => {
+  // 首次进入：滚到底（若有缓存消息）+ 聚焦
+  await nextTick()
+  chatViewRef.value?.scrollToBottom()
   focusChatInput()
 })
 
@@ -378,6 +381,7 @@ watch(() => route.params.sessionId, (sid) => {
   if (!sessions.value.some(s => s.id === sid)) {
     sessions.value.unshift({ id: sid, title: '新对话', createdAt: Date.now(), messages: [] })
   }
+  // 路由切换触发的会话切换：也要滚到底
   selectSession(sid)
 })
 
@@ -485,8 +489,10 @@ const selectSession = async (id) => {
   attachedImage.value = null
   abortController?.abort()
 
-  // 切换会话后自动聚焦（用户下一步大概率继续输入）
+  // 切换会话后：自动滚到底 + 聚焦（用户下一步大概率继续输入）
   if (currentMode.value === MODE.CHAT) {
+    await nextTick()
+    chatViewRef.value?.scrollToBottom()
     await focusChatInput()
   }
 }
@@ -496,8 +502,10 @@ const createNewSession = async () => {
   sessions.value.unshift({ id, title: '新对话', createdAt: Date.now(), messages: [] })
   await selectSession(id)
 
-  // 新建会话后强制聚焦（这是明确的“开始输入”意图）
+  // 新建会话后强制滚到底 + 聚焦（明确的“开始输入”意图）
   if (currentMode.value === MODE.CHAT) {
+    await nextTick()
+    chatViewRef.value?.scrollToBottom()
     await focusChatInput()
   }
 }
