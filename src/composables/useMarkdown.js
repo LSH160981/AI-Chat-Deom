@@ -87,13 +87,47 @@ const md = new MarkdownIt({
  */
 window.copyCode = async (btn) => {
   // 从按钮向上查找 .code-block 容器，再定位其中的 <code> 元素获取文本
-  const code = btn.closest('.code-block').querySelector('code').textContent
-  try {
-    await navigator.clipboard.writeText(code) // 写入剪贴板
+  const code = btn.closest('.code-block')?.querySelector('code')?.textContent || ''
+  if (!code) return
+
+  const ok = async () => {
     btn.textContent = '已复制'
-    setTimeout(() => { btn.textContent = '复制' }, 2000) // 2秒后恢复按钮文字
+    setTimeout(() => { btn.textContent = '复制' }, 2000)
+  }
+  const fail = () => { btn.textContent = '失败' }
+
+  // 优先使用 Clipboard API（需要安全上下文 https / localhost）
+  try {
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(code)
+      await ok()
+      return
+    }
   } catch {
-    btn.textContent = '失败' // 剪贴板 API 不可用时（如非 HTTPS 环境）显示失败
+    // 继续尝试降级方案
+  }
+
+  // 降级方案：execCommand('copy')（在 http / iOS 某些环境仍可用）
+  try {
+    const ta = document.createElement('textarea')
+    ta.value = code
+    ta.setAttribute('readonly', '')
+    ta.style.position = 'fixed'
+    ta.style.top = '-9999px'
+    ta.style.left = '-9999px'
+    document.body.appendChild(ta)
+    ta.focus()
+    ta.select()
+    ta.setSelectionRange(0, ta.value.length)
+    const success = document.execCommand('copy')
+    document.body.removeChild(ta)
+    if (success) {
+      await ok()
+    } else {
+      fail()
+    }
+  } catch {
+    fail()
   }
 }
 
