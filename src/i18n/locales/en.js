@@ -22,9 +22,6 @@ export default {
   },
   modes: {
     chat: 'AI Chat',
-    txt2img: 'Image Gen',
-    speech2txt: 'Speech to Text',
-    txt2speech: 'Text to Speech',
   },
   chat: {
     placeholder: 'Message AI...',
@@ -32,10 +29,6 @@ export default {
     disclaimer: 'AI can make mistakes. Verify important information.',
     thinking: 'Thinking...',
     error: 'Error: {msg}',
-    stopSpeak: 'Stop',
-    speak: 'Read aloud',
-    uploadImage: 'Upload image',
-    voiceInput: 'Voice input',
   },
   image: {
     empty: 'AI Image Generation',

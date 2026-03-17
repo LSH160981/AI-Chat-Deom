@@ -22,9 +22,6 @@ export default {
   },
   modes: {
     chat: 'AI チャット',
-    txt2img: '画像生成',
-    speech2txt: '音声認識',
-    txt2speech: '音声合成',
   },
   chat: {
     placeholder: 'AIにメッセージを送る...',
@@ -32,10 +29,6 @@ export default {
     disclaimer: 'AIは誤りを犯す可能性があります。重要な情報は確認してください。',
     thinking: '考え中...',
     error: 'エラー：{msg}',
-    stopSpeak: '停止',
-    speak: '読み上げ',
-    uploadImage: '画像をアップロード',
-    voiceInput: '音声入力',
   },
   image: {
     empty: 'AI 画像生成',

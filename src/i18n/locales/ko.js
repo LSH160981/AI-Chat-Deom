@@ -22,9 +22,6 @@ export default {
   },
   modes: {
     chat: 'AI 대화',
-    txt2img: '이미지 생성',
-    speech2txt: '음성을 텍스트로',
-    txt2speech: '텍스트를 음성으로',
   },
   chat: {
     placeholder: 'AI에게 메시지 보내기...',
@@ -32,10 +29,6 @@ export default {
     disclaimer: 'AI는 오류를 범할 수 있습니다. 중요한 정보는 확인하세요.',
     thinking: '생각 중...',
     error: '오류: {msg}',
-    stopSpeak: '중지',
-    speak: '읽어주기',
-    uploadImage: '이미지 업로드',
-    voiceInput: '음성 입력',
   },
   image: {
     empty: 'AI 이미지 생성',

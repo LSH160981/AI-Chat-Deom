@@ -30,9 +30,6 @@ export default {
   // 侧边栏模式
   modes: {
     chat: 'AI 对话',
-    txt2img: '文生图',
-    speech2txt: '语音转文字',
-    txt2speech: '文字转语音',
   },
 
   // 对话
@@ -42,44 +39,8 @@ export default {
     disclaimer: 'AI 生成内容可能存在错误，请核实重要信息',
     thinking: '正在思考...',
     error: '出错了：{msg}',
-    stopSpeak: '停止',
-    speak: '朗读',
-    uploadImage: '上传图片',
-    voiceInput: '语音输入',
   },
 
-  // 文生图
-  image: {
-    empty: 'AI 图片生成',
-    emptyHint: '描述你想要的图片',
-    generating: '正在生成图片...',
-    placeholder: '描述你想要的图片，例如：一只在咖啡馆读书的猫...',
-    download: '↓ 下载',
-    failed: '图片生成失败：{msg}',
-  },
-
-  // 语音转文字
-  stt: {
-    empty: '语音转文字',
-    emptyHint: '录音或上传音频文件',
-    transcribing: '正在转录...',
-    startRecord: '🎙 开始录音',
-    stopRecord: '⏹ 停止录音',
-    uploadAudio: '📁 上传音频文件',
-    clearResult: '清空',
-    failed: '转录失败：{msg}',
-    micDenied: '麦克风权限被拒绝',
-    or: '或',
-  },
-
-  // 文字转语音
-  tts: {
-    empty: '文字转语音',
-    emptyHint: '支持 OpenAI / AWS Polly / ElevenLabs',
-    synthesizing: '正在合成语音...',
-    placeholder: '输入要转换为语音的文字...',
-    failed: '语音合成失败：{msg}',
-  },
 
   // 设置页
   settings: {
@@ -89,8 +50,6 @@ export default {
 
     // 分区
     sectionChat: '对话',
-    sectionTTS: '语音 (TTS)',
-    sectionImage: '图片生成',
     sectionAppearance: '外观',
     sectionAdvanced: '高级',
     sectionAbout: '关于',

@@ -237,85 +237,8 @@ export async function chatStream({ messages, model, temperature, signal, onChunk
 }
 
 /**
- * 文生图（Image Generation）
+ * （已移除）文生图 / 语音转文字 / 文字转语音
  *
- * 调用 OpenAI 的 /images/generations 接口，根据文字描述生成图片。
- *
- * @param {Object} params           - 请求参数
- * @param {string} params.prompt    - 图片描述文本（提示词）
- * @param {string} params.model     - 使用的图像模型（如 'dall-e-3'）
- * @param {string} [params.size='1024x1024'] - 图片尺寸，格式为 'WxH'
- * @param {string} [params.quality='standard'] - 图片质量（'standard' 或 'hd'）
- * @returns {Promise<string>} 生成图片的 URL 或 base64 数据（b64_json）
- * @throws {Error} 接口返回非 2xx 状态码时抛出
+ * 说明：本项目当前仅保留对话(chat)能力。
  */
-/**
- * generateImage（历史实现/参考）：文生图
- */
-export async function generateImage({ prompt, model, size = '1024x1024', quality = 'standard' }) {
-  const baseUrl = normalizeBaseUrl(settings.apiBaseUrl)
-  const apiKey  = settings.apiKey
-  const resp = await fetch(baseUrl + '/images/generations', {
-    method: 'POST',
-    headers: buildHeaders(apiKey, 'openai'), // 图像接口均使用 OpenAI 格式
-    body: JSON.stringify({ prompt, model, size, quality, n: 1 }), // n: 1 表示生成1张
-  })
-  if (!resp.ok) throw new Error(`HTTP ${resp.status}`)
-  const data = await resp.json()
-  // 优先返回图片 URL，否则返回 base64 数据
-  return data.data?.[0]?.url || data.data?.[0]?.b64_json
-}
-
-/**
- * 语音转文字（Speech to Text / ASR）
- *
- * 将录音 Blob 上传至 Whisper 接口进行语音识别，返回识别出的文字。
- *
- * @param {Blob} blob - 录音数据（如 audio/webm 格式的 Blob）
- * @returns {Promise<string>} 识别出的文字，若无结果则返回空字符串
- * @throws {Error} 接口返回非 2xx 状态码时抛出
- */
-export async function transcribeAudio(blob) {
-  const baseUrl = normalizeBaseUrl(settings.apiBaseUrl)
-  const apiKey  = settings.apiKey
-  const form = new FormData()
-  form.append('file', blob, 'audio.webm') // 以 multipart/form-data 方式上传音频文件
-  form.append('model', 'whisper-1')       // 指定使用 Whisper 模型
-  const resp = await fetch(baseUrl + '/audio/transcriptions', {
-    method: 'POST',
-    headers: apiKey ? { Authorization: `Bearer ${apiKey}` } : {}, // 音频接口不传 Content-Type，由 fetch 自动设置 multipart
-    body: form,
-  })
-  if (!resp.ok) throw new Error(`HTTP ${resp.status}`)
-  const data = await resp.json()
-  return data.text || '' // 返回识别文本，接口无结果时返回空字符串
-}
-
-/**
- * 文字转语音（Text to Speech / TTS）
- *
- * 将文本发送至 TTS 接口合成语音，并将返回的音频数据转为可播放的 ObjectURL。
- *
- * @param {Object} params            - 请求参数
- * @param {string} params.text       - 要转换为语音的文本内容
- * @param {string} [params.voice='alloy'] - 音色名称（如 'alloy', 'echo', 'fable' 等）
- * @param {string} [params.model='tts-1'] - TTS 模型（'tts-1' 或 'tts-1-hd'）
- * @returns {Promise<string>} 音频的 ObjectURL，可直接赋值给 <audio> 的 src
- * @throws {Error} 接口返回非 2xx 状态码时抛出
- */
-/**
- * synthesizeSpeech（历史实现/参考）：文字转语音
- */
-export async function synthesizeSpeech({ text, voice = 'alloy', model = 'tts-1' }) {
-  const baseUrl = normalizeBaseUrl(settings.apiBaseUrl)
-  const apiKey  = settings.apiKey
-  const resp = await fetch(baseUrl + '/audio/speech', {
-    method: 'POST',
-    headers: buildHeaders(apiKey, 'openai'),
-    body: JSON.stringify({ input: text, voice, model }), // input 字段为 TTS 接口要求的文本字段名
-  })
-  if (!resp.ok) throw new Error(`HTTP ${resp.status}`)
-  const ab = await resp.arrayBuffer()                              // 读取二进制音频数据
-  return URL.createObjectURL(new Blob([ab], { type: 'audio/mpeg' })) // 转为 ObjectURL 供播放器使用
-}
 
