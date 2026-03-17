@@ -65,10 +65,7 @@
           <AppIcon name="settings" :size="16" />
         </router-link>
 
-        <!-- 清空按钮：仅在聊天模式且有消息时显示 -->
-        <button v-if="currentMode === MODE.CHAT && messages.length > 0" class="icon-btn" @click="newChat" :title="$t('common.clear')">
-          <AppIcon name="trash" :size="16" />
-        </button>
+
       </header>
 
       <!-- 未配置 API 时的引导提示 -->
@@ -97,6 +94,9 @@
         @toggleRecording="toggleRecording"
         @imageUpload="handleImageUpload"
         @removeImage="attachedImage = null"
+        @clear="newChat"
+        @stop="stopGenerating"
+        @regenerate="regenerateLast"
       />
 
       <!-- 文生图视图：模式为 txt2img 时渲染 -->
@@ -227,6 +227,32 @@ let currentAudio = null
 
 /** 当前流式请求的 AbortController，用于中断请求 */
 let abortController = null
+
+/**
+ * 停止生成（中断当前流式请求）
+ */
+const stopGenerating = () => {
+  abortController?.abort()
+}
+
+/**
+ * 重新回答：删除最后一条 assistant（如果存在），用最后一条 user 重新发一次
+ */
+const regenerateLast = async () => {
+  if (isLoading.value) return
+  // 找到最后一条 user 消息
+  const lastUserIdx = [...messages.value].map(m => m.role).lastIndexOf('user')
+  if (lastUserIdx === -1) return
+
+  // 如果最后一条是 assistant，把它移除（避免旧答案残留）
+  if (messages.value[messages.value.length - 1]?.role === 'assistant') {
+    messages.value.pop()
+  }
+
+  // 用最后的 user 内容重发
+  userInput.value = messages.value[lastUserIdx].content || ''
+  await sendMessage()
+}
 
 // 语音录音 composable，提供 isRecording / startRecording / stopRecording
 const { isRecording, startRecording, stopRecording } = useRecorder()

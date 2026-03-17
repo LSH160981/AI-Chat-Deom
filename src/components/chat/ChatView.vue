@@ -74,6 +74,23 @@
 
   <!-- 底部输入区域 -->
   <div class="input-area">
+    <!-- 输入框上方小功能条 -->
+    <div class="input-tools">
+      <button class="tool-btn" :disabled="isLoading" @click="$emit('regenerate')" title="重新回答">
+        <span class="tool-icon">↻</span>
+        <span>重新回答</span>
+      </button>
+      <button class="tool-btn danger" :disabled="isLoading" @click="$emit('clear')" title="删除对话">
+        <span class="tool-icon">🗑</span>
+        <span>删除对话</span>
+      </button>
+      <button v-if="isLoading" class="tool-btn" @click="$emit('stop')" title="停止">
+        <span class="tool-icon">⏹</span>
+        <span>停止</span>
+      </button>
+      <div class="tool-spacer"></div>
+    </div>
+
     <!-- 输入框包装器：isFocused 状态下添加聚焦样式 -->
     <div class="input-wrapper" :class="{ focused: isFocused }">
       <!-- 图片上传按钮：点击触发隐藏的 file input -->
@@ -157,7 +174,18 @@ const props = defineProps({
  * imageUpload       - 图片上传文件选择事件，参数：原生 Event
  * removeImage       - 请求移除已附加的图片
  */
-const emit = defineEmits(['update:modelValue', 'send', 'speak', 'toggleRecording', 'imageUpload', 'removeImage'])
+const emit = defineEmits([
+  'update:modelValue',
+  'send',
+  'speak',
+  'toggleRecording',
+  'imageUpload',
+  'removeImage',
+  // 输入框上方工具条
+  'clear',       // 清空对话
+  'regenerate',  // 重新回答
+  'stop',        // 停止生成
+])
 
 // Markdown 渲染 composable，处理代码高亮、数学公式等
 const { renderContent } = useMarkdown()
