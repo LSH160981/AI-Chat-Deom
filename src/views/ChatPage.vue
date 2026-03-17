@@ -150,7 +150,7 @@
  * - 四个功能视图的渲染与状态协调：聊天 / 文生图 / 语音转文字 / 文字转语音
  * - 聊天流式发送、停止、重新回答、上下文拼接等核心业务逻辑
  */
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
 import AppSidebar from '@/components/layout/AppSidebar.vue'
 import ChatView from '@/components/chat/ChatView.vue'
@@ -317,9 +317,18 @@ const lightboxSrc = ref(null)
 /** ChatView 子组件引用，用于调用 scrollToBottom / focusInput / resetInputHeight */
 const chatViewRef = ref(null)
 
+/**
+ * 聚焦输入框的统一入口
+ * 说明：部分移动端浏览器会限制“非用户手势触发”的 focus，这里尽力而为。
+ */
+const focusChatInput = async () => {
+  await nextTick()
+  chatViewRef.value?.focusInput()
+}
+
 // 页面首次进入时自动聚焦输入框（移动端/部分浏览器可能因策略限制而不生效）
 onMounted(() => {
-  chatViewRef.value?.focusInput()
+  focusChatInput()
 })
 
 // 将对话消息持久化到 localStorage（用于“从设置页返回后不丢对话”）
@@ -427,17 +436,27 @@ const currentModeLabel = computed(() => CHAT_MODES.find(m => m.id === currentMod
 /**
  * 开始新对话：清空消息列表、输入内容、附件，并中断正在进行的流式请求
  */
-const selectSession = (id) => {
+const selectSession = async (id) => {
   activeSessionId.value = id
   userInput.value = ''
   attachedImage.value = null
   abortController?.abort()
+
+  // 切换会话后自动聚焦（用户下一步大概率继续输入）
+  if (currentMode.value === MODE.CHAT) {
+    await focusChatInput()
+  }
 }
 
-const createNewSession = () => {
+const createNewSession = async () => {
   const id = crypto?.randomUUID?.() || String(Date.now())
   sessions.value.unshift({ id, title: '新对话', createdAt: Date.now(), messages: [] })
-  selectSession(id)
+  await selectSession(id)
+
+  // 新建会话后强制聚焦（这是明确的“开始输入”意图）
+  if (currentMode.value === MODE.CHAT) {
+    await focusChatInput()
+  }
 }
 
 /**
@@ -481,12 +500,17 @@ const deleteSession = async (id) => {
  * 删除当前会话的所有消息（“清空对话”）
  * 注意：这不会删除会话本身，只清空消息内容。
  */
-const newChat = () => {
+const newChat = async () => {
   if (!activeSession.value) return
   activeSession.value.messages = []
   userInput.value = ''
   attachedImage.value = null
   abortController?.abort()
+
+  // 清空当前会话后自动聚焦（用户下一步大概率继续输入）
+  if (currentMode.value === MODE.CHAT) {
+    await focusChatInput()
+  }
 }
 
 /**
@@ -591,7 +615,8 @@ const sendMessage = async () => {
   } finally {
     isLoading.value = false
     chatViewRef.value?.scrollToBottom()
-    chatViewRef.value?.focusInput() // 恢复输入框焦点
+    // 发送完成后自动聚焦：用户下一步很可能继续追问
+    await focusChatInput()
   }
 }
 
@@ -627,7 +652,13 @@ const speakText = async (text, idx) => {
  * 录音结束后自动调用 STT API 将语音转为文字并追加到输入框
  */
 const toggleRecording = async () => {
-  if (isRecording.value) { stopRecording(); return } // 正在录音则停止
+  // 停止录音：用户意图通常是“回到输入框继续编辑/发送”
+  if (isRecording.value) {
+    stopRecording()
+    if (currentMode.value === MODE.CHAT) await focusChatInput()
+    return
+  }
+
   try {
     await startRecording(async (blob) => {
       // 录音完成回调：调用转写 API
@@ -635,8 +666,9 @@ const toggleRecording = async () => {
         const text = await transcribeAudio(blob)
         // 将转写结果追加到输入框（如果已有内容则加空格分隔）
         userInput.value += (userInput.value ? ' ' : '') + text
+        // 转写结束后自动聚焦输入框，便于继续补充/修改
+        if (currentMode.value === MODE.CHAT) await focusChatInput()
       } catch (e) {
-        // 转写失败不影响录音流程；开发环境下打印错误便于排查
         if (import.meta.env.DEV) console.error('[ChatPage][STT]', e)
       }
     })
