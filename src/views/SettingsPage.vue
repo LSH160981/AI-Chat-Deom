@@ -695,11 +695,13 @@ const clearData = async () => {
 .s-toggle input:checked + .s-toggle-track::before { transform: translateX(20px); }
 
 .lang-picker { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 4px; }
-.lang-btn { display: flex; align-items: center; justify-content: flex-start; gap: 10px; padding: 10px 14px; border: 1.5px solid var(--input-border); border-radius: 10px; background: var(--input-bg); font-size: 14px; color: var(--text-secondary); cursor: pointer; transition: all 0.15s; width: 100%; line-height: 1; }
+.lang-btn { display: flex; align-items: center; justify-content: flex-start; gap: 10px; padding: 10px 14px; border: 1.5px solid var(--input-border); border-radius: 10px; background: var(--input-bg); font-size: 14px; color: var(--text-secondary); cursor: pointer; transition: all 0.15s; width: 100%; line-height: 1; min-height: 44px; }
 .lang-btn:hover { border-color: var(--text-secondary); color: var(--text); background: var(--hover-bg); }
 .lang-btn.active { border-color: #60a5fa; color: var(--text); font-weight: 600; background: rgba(96,165,250,0.1); }
-.lang-flag { font-size: 18px; flex-shrink: 0; line-height: 1; display: inline-flex; align-items: center; }
-.lang-name { font-size: 13px; line-height: 1; display: inline-flex; align-items: center; }
+
+/* 固定旗帜区域宽度，让两列按钮的文字起始位置一致（emoji 宽度不同会导致错位） */
+.lang-flag { width: 26px; font-size: 18px; flex-shrink: 0; line-height: 1; display: inline-flex; align-items: center; justify-content: center; }
+.lang-name { font-size: 13px; line-height: 1; display: inline-flex; align-items: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 .theme-picker { display: flex; gap: 8px; flex-wrap: wrap; }
 .theme-btn { display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 8px 12px; border: 1.5px solid var(--input-border); border-radius: 10px; background: var(--input-bg); font-size: 12px; color: var(--text-secondary); cursor: pointer; transition: all 0.15s; }
