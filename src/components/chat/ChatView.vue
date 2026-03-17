@@ -104,10 +104,6 @@
         <span class="tool-icon">↻</span>
         <span>重新回答</span>
       </button>
-      <button class="tool-btn danger" :disabled="isLoading" @click="$emit('clear')" title="删除对话">
-        <span class="tool-icon">🗑</span>
-        <span>删除对话</span>
-      </button>
       <button v-if="isLoading" class="tool-btn" @click="$emit('stop')" title="停止">
         <span class="tool-icon">⏹</span>
         <span>停止</span>
