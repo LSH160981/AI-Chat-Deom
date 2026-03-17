@@ -97,7 +97,17 @@ const hasGroups = computed(() => normalizedItems.value.some(x => x.type === 'gro
 const hasIcons  = computed(() => normalizedItems.value.some(x => x.type !== 'group' && !!x.icon))
 const useIconCol = computed(() => hasGroups.value || hasIcons.value)
 
-const isUrlIcon = (s) => typeof s === 'string' && /^https?:\/\//.test(s)
+// icon 既可能是 emoji，也可能是 URL（dev 时可能是 http(s)，build 后通常是 /assets/xxx.svg）
+const isUrlIcon = (s) => {
+  if (typeof s !== 'string' || !s) return false
+  return (
+    /^https?:\/\//.test(s) ||
+    s.startsWith('/') ||
+    s.startsWith('./') ||
+    s.startsWith('../') ||
+    s.startsWith('data:')
+  )
+}
 
 const choose = (v) => {
   emit('update:modelValue', v)
