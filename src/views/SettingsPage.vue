@@ -317,14 +317,16 @@
       <!-- ────────────── 语言 ────────────── -->
       <section class="settings-section">
         <h2 class="section-title"><span class="section-icon">🌐</span> {{ $t('settings.sectionLanguage') }}</h2>
-        <div class="setting-item col">
-          <div class="lang-picker">
-            <!-- 遍历 LANGUAGES 列表，点击调用 switchLang 切换语言 -->
-            <button v-for="lang in LANGUAGES" :key="lang.code" class="lang-btn" :class="{ active: currentLocale === lang.code }" @click="switchLang(lang.code)">
-              <span class="lang-flag">{{ lang.flag }}</span>
-              <span class="lang-name">{{ lang.label }}</span>
-            </button>
+        <div class="setting-item">
+          <div class="setting-info">
+            <label>{{ $t('settings.sectionLanguage') }}</label>
+            <p>切换界面语言</p>
           </div>
+          <select class="s-select" :value="currentLocale" @change="switchLang($event.target.value)">
+            <option v-for="lang in LANGUAGES" :key="lang.code" :value="lang.code">
+              {{ lang.flag }} {{ lang.label }}
+            </option>
+          </select>
         </div>
       </section>
 
@@ -694,50 +696,8 @@ const clearData = async () => {
 .s-toggle input:checked + .s-toggle-track { background: #4ade80; border-color: #4ade80; }
 .s-toggle input:checked + .s-toggle-track::before { transform: translateX(20px); }
 
-.lang-picker { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 4px; }
-
-/*
-  语言按钮：用 grid 固定两列（旗帜列 + 文本列），彻底消除 emoji/不同语言字体带来的基线差异。
-  目标：视觉上“旗帜”和“文字”在每个按钮内始终同一水平线。
-*/
-.lang-btn {
-  display: grid;
-  grid-template-columns: 28px 1fr;
-  align-items: center;
-  column-gap: 10px;
-  padding: 10px 14px;
-  border: 1.5px solid var(--input-border);
-  border-radius: 10px;
-  background: var(--input-bg);
-  font-size: 14px;
-  color: var(--text-secondary);
-  cursor: pointer;
-  transition: all 0.15s;
-  width: 100%;
-  min-height: 44px;
-}
-.lang-btn:hover { border-color: var(--text-secondary); color: var(--text); background: var(--hover-bg); }
-.lang-btn.active { border-color: #60a5fa; color: var(--text); font-weight: 600; background: rgba(96,165,250,0.1); }
-
-.lang-flag {
-  width: 28px;
-  height: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 18px;
-  line-height: 20px;
-}
-.lang-name {
-  height: 20px;
-  display: flex;
-  align-items: center;
-  font-size: 14px;
-  line-height: 20px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
+/* 语言选择：改为原生 <select>，避免 emoji 与多语言字体基线差异导致的对齐问题 */
+.lang-picker, .lang-btn, .lang-flag, .lang-name { display: none; }
 
 .theme-picker { display: flex; gap: 8px; flex-wrap: wrap; }
 .theme-btn { display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 8px 12px; border: 1.5px solid var(--input-border); border-radius: 10px; background: var(--input-bg); font-size: 12px; color: var(--text-secondary); cursor: pointer; transition: all 0.15s; }
