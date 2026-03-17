@@ -110,7 +110,7 @@ export default {
     clearData: '모든 데이터 삭제',
     clearDataHint: '로컬에 저장된 설정 및 캐시 삭제',
     clearDataBtn: '데이터 삭제',
-    aboutDesc: 'Puter.ai로 구축된 오픈소스 AI 어시스턴트',
+    aboutDesc: '가볍고 바로 쓰는 멀티 모델 AI 채팅 프론트엔드(OpenAI/Anthropic/Gemini 호환, 스트리밍, 로컬 저장).',
     language: '언어',
     languageHint: '앱 표시 언어 변경',
   },

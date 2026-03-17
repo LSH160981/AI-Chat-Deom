@@ -110,7 +110,7 @@ export default {
     clearData: 'Clear All Data',
     clearDataHint: 'Delete locally stored settings and cache',
     clearDataBtn: 'Clear Data',
-    aboutDesc: 'An open-source AI assistant built on Puter.ai',
+    aboutDesc: 'A lightweight, plug-and-play multi-model AI chat frontend (OpenAI/Anthropic/Gemini compatible, streaming, local storage).',
     language: 'Language',
     languageHint: 'Switch app display language',
   },

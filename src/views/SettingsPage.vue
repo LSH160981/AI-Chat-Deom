@@ -350,7 +350,9 @@
             <h3>AI Chat</h3>
             <p>{{ $t('settings.aboutDesc') }}</p>
             <p class="about-links">
-              <a href="https://github.com/LSH160981/AI-Chat-Deom" target="_blank">GitHub</a>
+              <a href="https://github.com/LSH160981/AI-Chat-Deom" target="_blank" rel="noreferrer">GitHub</a>
+              <span class="dot">·</span>
+              <a href="https://api.yexc.top" target="_blank" rel="noreferrer">默认接口</a>
             </p>
           </div>
         </div>

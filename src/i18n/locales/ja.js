@@ -110,7 +110,7 @@ export default {
     clearData: 'すべてのデータを削除',
     clearDataHint: 'ローカルに保存された設定とキャッシュを削除',
     clearDataBtn: 'データを削除',
-    aboutDesc: 'Puter.aiで構築されたオープンソースAIアシスタント',
+    aboutDesc: '軽量で“すぐ使える”マルチモデル対応のAIチャットフロントエンド（OpenAI/Anthropic/Gemini互換、ストリーミング、ローカル保存）。',
     language: '言語',
     languageHint: 'アプリの表示言語を切り替える',
   },

@@ -110,7 +110,7 @@ export default {
     clearData: 'Удалить все данные',
     clearDataHint: 'Удалить сохранённые настройки и кэш',
     clearDataBtn: 'Удалить данные',
-    aboutDesc: 'Открытый AI-ассистент на базе Puter.ai',
+    aboutDesc: 'Лёгкий и готовый к работе фронтенд для мульти-модельного AI-чата (совместим с OpenAI/Anthropic/Gemini, стриминг, локальное хранение).',
     language: 'Язык',
     languageHint: 'Изменить язык интерфейса',
   },

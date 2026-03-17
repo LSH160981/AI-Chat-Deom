@@ -137,7 +137,7 @@ export default {
     clearDataBtn: '清除数据',
 
     // 关于
-    aboutDesc: '基于 Puter.ai 构建的开源 AI 助手',
+    aboutDesc: '一个轻量、开箱即用的多模型 AI 聊天前端（支持 OpenAI/Anthropic/Gemini 兼容接口，支持流式输出、本地存储）。',
 
     // 语言
     language: '界面语言',
