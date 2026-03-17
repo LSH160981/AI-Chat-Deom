@@ -114,6 +114,7 @@
 
 <script setup>
 import { ref, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import AppSidebar from '@/components/layout/AppSidebar.vue'
 import ChatView from '@/components/chat/ChatView.vue'
 import ImageGenView from '@/components/chat/ImageGenView.vue'

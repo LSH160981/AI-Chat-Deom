@@ -383,10 +383,11 @@
  *  9. 危险操作（清除本地数据）
  */
 import { computed, ref, onMounted, onUnmounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { settings, resetSettings } from '@/stores/settings'
 import { LANGUAGES } from '@/i18n'
 import { useModal } from '@/composables/useModal'
-import { fetchModels } from '@/api'
+import { fetchModels, sendChatMessage } from '@/api'
 import { normalizeBaseUrl } from '@/composables/useApiClient'
 
 /** i18n：t 为翻译函数，locale 为当前语言 ref */
@@ -399,8 +400,6 @@ const { confirm } = useModal()
 const detecting = ref(false)
 /** 模型检测错误信息 */
 const detectError = ref('')
-/** sendChatMessage：流式发送消息，用于测试连接功能 */
-import { sendChatMessage } from '@/api'
 
 // ── 测试连接状态 ──────────────────────────────────────────
 /** 测试请求是否进行中 */
