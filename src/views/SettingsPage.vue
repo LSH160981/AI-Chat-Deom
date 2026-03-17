@@ -681,8 +681,38 @@ const clearData = async () => {
 .model-chip:hover { border-color: var(--text-secondary); color: var(--text); }
 .model-chip.selected { border-color: #60a5fa; color: #60a5fa; background: rgba(96,165,250,0.1); font-weight: 600; }
 
-.s-select { min-width: 150px; padding: 7px 32px 7px 10px; border: 1px solid var(--input-border); border-radius: 8px; font-size: 13px; background: var(--input-bg); color: var(--text); outline: none; cursor: pointer; appearance: none; -webkit-appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; }
-.s-select:focus { border-color: var(--text-secondary); }
+.s-select {
+  min-width: 170px;
+  height: 36px;
+  padding: 0 38px 0 12px;
+  border: 1px solid var(--input-border);
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.1px;
+  background: linear-gradient(180deg, var(--input-bg), var(--card-bg));
+  color: var(--text);
+  outline: none;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+  box-shadow: 0 1px 0 rgba(255,255,255,0.04), 0 8px 18px rgba(0,0,0,0.06);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+}
+.s-select:hover {
+  border-color: var(--text-secondary);
+}
+.s-select:focus {
+  border-color: #60a5fa;
+  box-shadow: 0 0 0 3px rgba(96,165,250,0.25);
+}
+.s-select:active {
+  transform: translateY(0.5px);
+}
+
 .s-input { width: 100%; padding: 7px 10px; border: 1px solid var(--input-border); border-radius: 8px; font-size: 13px; color: var(--text); background: var(--input-bg); outline: none; }
 .s-input:focus { border-color: var(--text-secondary); }
 .s-textarea { width: 100%; padding: 8px 10px; border: 1px solid var(--input-border); border-radius: 8px; font-size: 13px; font-family: inherit; resize: vertical; color: var(--text); background: var(--input-bg); outline: none; margin-top: 8px; line-height: 1.5; }
