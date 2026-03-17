@@ -6,12 +6,13 @@
  *  - /          → ChatPage  主聊天页
  *  - /settings  → SettingsPage 设置页
  */
-import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createWebHashHistory } from 'vue-router'
 import ChatPage from '@/views/ChatPage.vue'
 import SettingsPage from '@/views/SettingsPage.vue'
 
 const router = createRouter({
-  history: createWebHistory(import.meta.env.BASE_URL),
+  // GitHub Pages 刷新子路由会 404，使用 hash 路由最省事
+  history: createWebHashHistory(import.meta.env.BASE_URL),
   routes: [
     {
       path: '/',
