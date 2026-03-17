@@ -17,7 +17,10 @@
       @click="toggle"
     >
       <span class="fs-trigger-inner">
-        <span v-if="selected?.icon" class="fs-icon">{{ selected.icon }}</span>
+        <span v-if="selected?.icon" class="fs-icon">
+          <img v-if="isUrlIcon(selected.icon)" class="fs-icon-img" :src="selected.icon" alt="" />
+          <span v-else class="fs-icon-emoji">{{ selected.icon }}</span>
+        </span>
         <span class="fs-label" :class="{ placeholder: !selectedLabel }">{{ selectedLabel || placeholder }}</span>
       </span>
       <span class="fs-chevron" aria-hidden="true">▾</span>
@@ -39,7 +42,10 @@
               @click="choose(it.value)"
             >
               <!-- icon slot：需要 icon 列时才渲染；否则列表项整体左对齐 -->
-              <span v-if="useIconCol" class="fs-icon" :class="{ placeholder: !it.icon }">{{ it.icon || '' }}</span>
+              <span v-if="useIconCol" class="fs-icon" :class="{ placeholder: !it.icon }">
+                <img v-if="it.icon && isUrlIcon(it.icon)" class="fs-icon-img" :src="it.icon" alt="" />
+                <span v-else class="fs-icon-emoji">{{ it.icon || '' }}</span>
+              </span>
               <span class="fs-item-label">{{ it.label }}</span>
               <span class="fs-check" aria-hidden="true">{{ it.value === modelValue ? '✓' : '' }}</span>
             </button>
@@ -90,6 +96,8 @@ const selectedLabel = computed(() => selected.value?.label || '')
 const hasGroups = computed(() => normalizedItems.value.some(x => x.type === 'group'))
 const hasIcons  = computed(() => normalizedItems.value.some(x => x.type !== 'group' && !!x.icon))
 const useIconCol = computed(() => hasGroups.value || hasIcons.value)
+
+const isUrlIcon = (s) => typeof s === 'string' && /^https?:\/\//.test(s)
 
 const choose = (v) => {
   emit('update:modelValue', v)
@@ -193,22 +201,20 @@ onBeforeUnmount(() => {
 .fs-trigger-inner { display: inline-flex; align-items: center; gap: 8px; min-width: 0; height: 20px; }
 
 /*
-  Emoji（国旗）在不同平台的字形框不一致，容易出现“图标和文字一上一下”。
-  这里用固定高度 + line-height + 轻微下移来做视觉对齐。
+  国旗图标：统一用 <img>（SVG），彻底消除 emoji 基线差异导致的“图标/文字不对齐”。
+  仍兼容 emoji：若传入非 URL icon，会显示为文本。
 */
 .fs-icon {
   width: 26px;
   height: 20px;
-  line-height: 20px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 18px;
   flex-shrink: 0;
-  font-family: "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",system-ui;
-  transform: translateY(1px);
 }
 .fs-icon.placeholder { opacity: 0; }
+.fs-icon-img { width: 22px; height: 16px; border-radius: 3px; display: block; box-shadow: 0 0 0 1px rgba(0,0,0,0.18); }
+.fs-icon-emoji { font-size: 18px; line-height: 20px; display: inline-flex; align-items: center; justify-content: center; }
 
 .fs-label {
   height: 20px;
@@ -260,13 +266,8 @@ onBeforeUnmount(() => {
   text-align: left;
 }
 
-/* 列表里的 icon 同样固定高度，保持与文字基线一致 */
-.fs-item .fs-icon {
-  height: 20px;
-  line-height: 20px;
-  font-size: 18px;
-  transform: translateY(1px);
-}
+/* 列表里的 icon：不再用 translate hack，统一交给 img 的盒模型对齐 */
+.fs-item .fs-icon { height: 20px; }
 
 /* 无 icon 列（无分组且无 icon）时，让文本左对齐，不留空白 */
 .fs-pop-inner.no-icon-col .fs-item { grid-template-columns: minmax(0, 1fr) 20px; }

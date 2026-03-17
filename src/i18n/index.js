@@ -53,9 +53,9 @@ export default i18n
  *  - flag  国旗 Emoji（装饰用）
  */
 export const LANGUAGES = [
-  { code: 'zh', label: '中文', flag: '🇨🇳' },
-  { code: 'en', label: 'English', flag: '🇺🇸' },
-  { code: 'ja', label: '日本語', flag: '🇯🇵' },
-  { code: 'ko', label: '한국어', flag: '🇰🇷' },
-  { code: 'ru', label: 'Русский', flag: '🇷🇺' },
+  { code: 'zh', label: '中文', flag: new URL('../assets/flags/cn.svg', import.meta.url).href },
+  { code: 'en', label: 'English', flag: new URL('../assets/flags/us.svg', import.meta.url).href },
+  { code: 'ja', label: '日本語', flag: new URL('../assets/flags/jp.svg', import.meta.url).href },
+  { code: 'ko', label: '한국어', flag: new URL('../assets/flags/kr.svg', import.meta.url).href },
+  { code: 'ru', label: 'Русский', flag: new URL('../assets/flags/ru.svg', import.meta.url).href },
 ]
