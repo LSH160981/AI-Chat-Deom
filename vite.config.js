@@ -16,6 +16,23 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url))
     },
   },
+
+  /**
+   * 构建优化：拆分大体积依赖，避免单个 chunk 过大（>500KB）
+   * - vue 相关：vue / vue-router / vue-i18n
+   * - markdown 渲染：markdown-it / highlight.js / katex
+   */
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vue: ['vue', 'vue-router', 'vue-i18n'],
+          markdown: ['markdown-it', 'highlight.js', 'katex'],
+        },
+      },
+    },
+  },
+
   server: {
     allowedHosts: true
   }
