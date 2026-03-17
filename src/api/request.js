@@ -172,6 +172,13 @@ export async function postForm(url, formData, { headers = {}, signal } = {}) {
  * @param {function(string):void} opts.onChunk  每收到文本片段时的回调
  * @returns {Promise<{totalChars: number, latencyMs: number}>}
  */
+/**
+ * POST SSE 流式请求。
+ *
+ * 约定：
+ * - 兼容 OpenAI / Anthropic 的 stream 格式
+ * - 每解析到一段文本就回调 onChunk(chunk)
+ */
 export async function postStream(url, body, { headers = {}, signal, onChunk } = {}) {
   const tag = '[API STREAM]'
   const t0 = Date.now()

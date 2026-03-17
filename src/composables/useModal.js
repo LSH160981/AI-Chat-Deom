@@ -56,6 +56,22 @@ let _resolve = null
  *   onCancel: Function
  * }}
  */
+/**
+ * 全局弹窗 Composable。
+ *
+ * 说明：
+ * - 内部是一个单例 reactive state（见文件顶部 state）
+ * - confirm/alert 都返回 Promise<boolean>
+ *
+ * @returns {{
+ *   state: any,
+ *   confirm: (opts: object) => Promise<boolean>,
+ *   alert: (opts: object) => Promise<boolean>,
+ *   onConfirm: () => void,
+ *   onCancel: () => void,
+ * }}
+ */
+/** @returns {{ state:any, confirm:Function, alert:Function, onConfirm:Function, onCancel:Function }} */
 export function useModal() {
   /**
    * 显示弹窗（内部基础方法）

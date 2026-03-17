@@ -76,6 +76,11 @@ export function truncate(str, len, ellipsis = '...') {
  * escapeHtml('<script>alert("xss")</script>')
  * // "&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;"
  */
+/**
+ * 转义 HTML 特殊字符（XSS 防护）。
+ * @param {string} str
+ * @returns {string}
+ */
 export function escapeHtml(str) {
   if (!str || typeof str !== 'string') return ''
 
@@ -88,4 +93,6 @@ export function escapeHtml(str) {
   }
 
   return str.replace(/[&<>"']/g, (char) => escapeMap[char])
+}
+]/g, (char) => escapeMap[char])
 }

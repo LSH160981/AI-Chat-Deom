@@ -99,42 +99,40 @@
           <span>⚠️ </span><span v-text="cleanError(detectError)"></span>
         </div>
 
-        <!-- 测试连接按钮（发一条极简消息验证 API 可用性） -->
+        <!-- 测试连接：一键批量测试（对所有模型发同一条极简消息），失败项标红 -->
         <div class="setting-item">
           <div class="setting-info">
             <label>测试连接</label>
-            <p>验证 URL / Key / 模型是否可用</p>
+            <p>一键测试所有模型（失败标红）</p>
           </div>
-          <!-- 按钮颜色根据测试结果动态变化：ok=绿，fail=红 -->
           <button
             class="detect-btn"
             :class="testStatus === 'ok' ? 'test-ok' : testStatus === 'fail' ? 'test-fail' : ''"
-            :disabled="testing || !settings.apiBaseUrl || !settings.defaultModel"
-            @click="runTest"
+            :disabled="testing || !settings.apiBaseUrl || !settings.detectedModels.length"
+            @click="runTestAll"
           >
             <span v-if="testing" class="detect-spin"></span>
-            <template v-else-if="testStatus === 'ok'">✅ 可用</template>
-            <template v-else-if="testStatus === 'fail'">❌ 失败</template>
-            <template v-else>🧪 测试</template>
+            <template v-else-if="testStatus === 'ok'">✅ 全部可用</template>
+            <template v-else-if="testStatus === 'fail'">⚠️ 存在失败</template>
+            <template v-else>🧪 一键测试</template>
           </button>
         </div>
 
-        <!-- 测试成功后的详细结果：延迟 / 模型 / 回复内容 -->
-        <div v-if="testResult" class="test-result" :class="testStatus">
-          <div class="test-result-row">
-            <span class="test-label">延迟</span>
-            <span class="test-value">{{ testResult.latency }}ms</span>
-          </div>
-          <div class="test-result-row">
-            <span class="test-label">模型</span>
-            <span class="test-value mono">{{ testResult.model }}</span>
-          </div>
-          <div class="test-result-row">
-            <span class="test-label">回复</span>
-            <span class="test-value">{{ testResult.reply }}</span>
+        <!-- 批量测试结果列表 -->
+        <div v-if="testAllResults.length" class="test-all">
+          <div
+            v-for="r in testAllResults"
+            :key="r.model"
+            class="test-all-row"
+            :class="r.ok ? 'ok' : 'fail'"
+          >
+            <span class="mono">{{ r.model }}</span>
+            <span class="lat">{{ r.latency }}ms</span>
+            <span class="reply" v-text="r.ok ? r.reply : cleanError(r.error)"></span>
           </div>
         </div>
-        <!-- 测试失败错误信息 -->
+
+        <!-- 批量测试失败时的汇总错误信息（可选） -->
         <div v-if="testError" class="detect-error">
           ⚠️ <span v-text="cleanError(testError)"></span>
         </div>
@@ -464,32 +462,50 @@ const cleanError = (msg) => {
  * 通过流式接口验证 URL / Key / 模型三者是否均可用。
  * 记录延迟、模型 ID 和实际回复内容。
  */
-const runTest = async () => {
+// 批量测试结果（按模型）
+const testAllResults = ref([]) // Array<{model, ok, latency, reply, error}>
+
+/**
+ * 一键测试全部模型：对 detectedModels 里的每个模型发送同一条极简消息。
+ * - 成功：记录 latency + reply
+ * - 失败：记录 error，并在 UI 标红
+ *
+ * 注意：为了避免并发把服务商打爆，这里串行执行。
+ */
+const runTestAll = async () => {
   testing.value = true
   testStatus.value = ''
-  testResult.value = null
+  testAllResults.value = []
   testError.value = ''
-  const model = settings.defaultModel
-  const t0 = Date.now() // 记录开始时间，用于计算延迟
-  let reply = ''
+
+  const models = (settings.detectedModels || []).map(m => m.id)
+  if (!models.length) {
+    testing.value = false
+    return
+  }
+
+  let hasFail = false
   try {
-    await sendChatMessage({
-      messages: [{ role: 'user', content: 'Hi, reply with exactly one word: OK' }],
-      model,
-      temperature: 0, // 温度设为 0，确保回复确定性，避免干扰测试结果
-      onChunk: (c) => { reply += c }, // 收集流式返回的文本片段
-    })
-    testStatus.value = 'ok'
-    testResult.value = {
-      latency: Date.now() - t0, // 总延迟（ms）
-      model,
-      reply: reply.trim().slice(0, 80), // 截取前 80 字符展示
+    for (const model of models) {
+      const t0 = Date.now()
+      let reply = ''
+      try {
+        await sendChatMessage({
+          messages: [{ role: 'user', content: 'Hi, reply with exactly one word: OK' }],
+          model,
+          temperature: 0,
+          onChunk: (c) => { reply += c },
+        })
+        testAllResults.value.push({ model, ok: true, latency: Date.now() - t0, reply: reply.trim().slice(0, 80), error: '' })
+      } catch (e) {
+        hasFail = true
+        testAllResults.value.push({ model, ok: false, latency: Date.now() - t0, reply: '', error: e.message || String(e) })
+      }
     }
-  } catch (e) {
-    testStatus.value = 'fail'
-    testError.value = e.message || String(e)
+
+    testStatus.value = hasFail ? 'fail' : 'ok'
+    if (hasFail) testError.value = '部分模型测试失败（已标红）'
   } finally {
-    // 无论成功失败都要关闭加载状态
     testing.value = false
   }
 }
@@ -793,5 +809,14 @@ const clearData = async () => {
 .test-result-row:last-child { border-bottom: none; }
 .test-label { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.4px; flex-shrink: 0; width: 36px; }
 .test-value { color: var(--text); word-break: break-all; }
+
+/* 批量测试列表 */
+.test-all { margin: 0 16px 12px; border-radius: 12px; overflow: hidden; border: 1px solid var(--border); background: var(--card-bg); }
+.test-all-row { display: grid; grid-template-columns: minmax(0, 1fr) 72px minmax(0, 1fr); gap: 10px; padding: 10px 12px; border-bottom: 1px solid var(--border-subtle); align-items: center; font-size: 13px; }
+.test-all-row:last-child { border-bottom: none; }
+.test-all-row.ok { background: rgba(74,222,128,0.06); }
+.test-all-row.fail { background: rgba(248,113,113,0.06); }
+.test-all-row .lat { color: var(--text-muted); text-align: right; font-variant-numeric: tabular-nums; }
+.test-all-row .reply { color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .mono { font-family: monospace; font-size: 12px; }
 </style>

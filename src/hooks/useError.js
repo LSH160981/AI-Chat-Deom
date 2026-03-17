@@ -62,6 +62,16 @@ function stripHtml(str) {
  *   withErrorHandling: (fn: Function, opts?: object) => Promise<*>
  * }}
  */
+/**
+ * useError：统一错误处理 Hook。
+ *
+ * @returns {{
+ *   lastError: import('vue').Ref<string|null>,
+ *   cleanErrorMessage: (e: unknown) => string,
+ *   handleApiError: (e: unknown) => string,
+ *   withErrorHandling: (fn: Function, opts?: { fallback?: any, onError?: (msg: string)=>void }) => Promise<any>
+ * }}
+ */
 export function useError() {
   /**
    * 最近一次错误信息，可在模板中直接绑定展示

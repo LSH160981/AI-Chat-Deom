@@ -30,6 +30,15 @@ import { ref } from 'vue'
  *   stopRecording: Function
  * }}
  */
+/**
+ * 录音 Composable（MediaRecorder 封装）。
+ *
+ * @returns {{
+ *   isRecording: import('vue').Ref<boolean>,
+ *   startRecording: (onStop: (blob: Blob) => (void|Promise<void>)) => Promise<void>,
+ *   stopRecording: () => void
+ * }}
+ */
 export function useRecorder() {
   const isRecording = ref(false) // 响应式状态：当前是否正在录音（用于 UI 状态切换）
   let mediaRecorder = null       // MediaRecorder 实例，在 start/stop 之间保持引用

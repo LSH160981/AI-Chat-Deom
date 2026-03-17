@@ -54,6 +54,11 @@ const ready = ref(false)
  *   ready: import('vue').Ref<boolean>
  * }}
  */
+/**
+ * 使用 Puter SDK（动态加载）。
+ *
+ * @returns {{ puter: () => any, ready: import('vue').Ref<boolean> }}
+ */
 export function usePuter() {
   onMounted(() => {
     // 检查 SDK 是否已通过其他途径加载（如 HTML 中的 <script> 标签）

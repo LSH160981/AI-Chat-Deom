@@ -42,6 +42,15 @@ function isCFBlock(msg) {
  *   error: import('vue').Ref<string>
  * }}
  */
+/**
+ * 模型检测 Composable。
+ *
+ * @returns {{
+ *   detect: (baseUrlRaw: string, apiKey: string) => Promise<any[]>,
+ *   detecting: import('vue').Ref<boolean>,
+ *   error: import('vue').Ref<string>
+ * }}
+ */
 export function useModelDetector() {
   const detecting = ref(false) // 是否正在检测中（用于控制 UI 加载状态）
   const error = ref('')        // 最近一次检测的错误信息，无错误时为空字符串

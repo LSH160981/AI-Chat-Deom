@@ -15,6 +15,11 @@
  * isValidUrl('not-a-url')              // false
  * isValidUrl('')                        // false
  */
+/**
+ * 判断是否为合法 URL（仅 http/https）。
+ * @param {string} url
+ * @returns {boolean}
+ */
 export function isValidUrl(url) {
   if (!url || typeof url !== 'string') return false
 
@@ -62,4 +67,6 @@ export function isEmpty(val) {
   if (val === null || val === undefined) return true
   if (typeof val === 'string') return val.trim() === ''
   return false
+}
+e
 }
