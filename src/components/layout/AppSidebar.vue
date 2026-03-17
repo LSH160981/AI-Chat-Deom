@@ -3,7 +3,7 @@
   文件说明：AppSidebar.vue
   功能：应用左侧边栏组件，提供以下功能：
     1. 功能模式切换（聊天 / 文生图 / 语音转文字 / 文字转语音）
-    2. 底部跳转设置页面入口
+    2.（已移除）设置入口（已移动到主页右上角）
 
   说明：
     - 模型选择已移动到主页顶部（AI 对话标题旁）
@@ -42,21 +42,10 @@
     </div>
 
     <div class="sidebar-divider"></div>
-
-    <!-- 底部：跳转设置页面入口 -->
-    <div class="sidebar-bottom">
-      <!-- RouterLink：点击跳转 /settings 并关闭侧边栏 -->
-      <RouterLink to="/settings" class="settings-link" @click="$emit('close')">
-        <!-- 齿轮图标（全局 AppIcon） -->
-        <AppIcon name="settings" :size="15" />
-        {{ $t('common.settings') }}
-      </RouterLink>
-    </div>
   </aside>
 </template>
 
 <script setup>
-import { RouterLink } from 'vue-router'
 import { CHAT_MODES } from '@/constants/models'
 
 /**
@@ -83,25 +72,5 @@ defineEmits([
 </script>
 
 <style>
-/* 底部导航栏容器：使用 margin-top:auto 将其推到侧边栏底部 */
-.sidebar-bottom {
-  margin-top: auto;
-  padding: 12px 8px 0;
-  border-top: 1px solid var(--border);
-}
-/* 设置页链接样式 */
-.settings-link {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 9px 12px;
-  border-radius: 8px;
-  text-decoration: none;
-  font-size: 14px;
-  color: var(--text-secondary);
-  transition: background 0.15s, color 0.15s;
-}
-.settings-link:hover { background: var(--hover-bg); color: var(--text); }
-/* 当前激活的路由链接高亮 */
-.settings-link.router-link-active { background: var(--active-bg); color: var(--text); font-weight: 600; }
+/* 侧边栏目前不含底部导航（设置入口已移至主页右上角） */
 </style>
