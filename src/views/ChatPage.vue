@@ -21,8 +21,11 @@
     <AppSidebar
       :open="sidebarOpen"
       v-model:currentMode="currentMode"
+      :sessions="sessions"
+      :activeSessionId="activeSessionId"
+      @selectSession="selectSession"
       @close="sidebarOpen = false"
-      @newChat="newChat"
+      @newChat="createNewSession"
     />
 
     <!-- 遮罩层：侧边栏打开时显示，点击关闭侧边栏 -->
@@ -197,6 +200,33 @@ const { alert } = useModal()
 
 // ===== 会话状态 =====
 
+/**
+ * 多会话（ChatGPT 风格）
+ * - sessions: 会话列表（含 title + messages）
+ * - activeSessionId: 当前激活会话
+ *
+ * 缓存策略：localStorage 持久化
+ */
+const SESSIONS_KEY = 'ai-chat-cache.sessions'
+
+const sessions = ref(storage.get(SESSIONS_KEY, [])) // Array<{id, title, createdAt, messages:[] }>
+const activeSessionId = ref(storage.get('ai-chat-cache.activeSessionId', ''))
+
+const ensureSessions = () => {
+  if (!Array.isArray(sessions.value)) sessions.value = []
+  if (!sessions.value.length) {
+    const id = crypto?.randomUUID?.() || String(Date.now())
+    sessions.value.push({ id, title: '新对话', createdAt: Date.now(), messages: [] })
+    activeSessionId.value = id
+  }
+  if (!activeSessionId.value || !sessions.value.some(s => s.id === activeSessionId.value)) {
+    activeSessionId.value = sessions.value[0].id
+  }
+}
+ensureSessions()
+
+const activeSession = computed(() => sessions.value.find(s => s.id === activeSessionId.value))
+
 /** 当前功能模式：chat / txt2img / speech2txt / txt2speech */
 const currentMode = ref(MODE.CHAT)
 
@@ -211,10 +241,13 @@ const selectedModel = ref(settings.defaultModel || '')
  * 需求：离开对话页去设置页再回来，消息不能丢。
  * 方案：将 messages 持久化到 localStorage（同域名下）。
  */
-const CHAT_CACHE_KEY = 'ai-chat-cache.messages'
-// 仅允许缓存 text-based 消息，避免把 base64 图片塞进 localStorage（容量小且会卡）
-const safeCached = (storage.get(CHAT_CACHE_KEY, []) || []).filter(m => m && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string')
-const messages = ref(safeCached)
+// 当前会话的消息列表（从 activeSession 派生出来），用于绑定到 ChatView
+const messages = computed({
+  get: () => activeSession.value?.messages || [],
+  set: (v) => {
+    if (activeSession.value) activeSession.value.messages = v
+  }
+})
 
 /** 用户输入框内容（多视图共用同一变量） */
 const userInput = ref('')
@@ -249,10 +282,16 @@ onMounted(() => {
 })
 
 // 将对话消息持久化到 localStorage（用于“从设置页返回后不丢对话”）
-watch(messages, (v) => {
-  // 只缓存 role/content，避免存入不可序列化对象
-  const slim = (v || []).map(m => ({ role: m.role, content: m.content }))
-  storage.set(CHAT_CACHE_KEY, slim)
+watch(sessions, (v) => {
+  // 只缓存 role/content/image（image 可能很大：这里不缓存 user.image，避免 localStorage 爆掉）
+  const slimSessions = (v || []).map(s => ({
+    id: s.id,
+    title: s.title,
+    createdAt: s.createdAt,
+    messages: (s.messages || []).map(m => ({ role: m.role, content: m.content })),
+  }))
+  storage.set(SESSIONS_KEY, slimSessions)
+  storage.set('ai-chat-cache.activeSessionId', activeSessionId.value)
 }, { deep: true })
 
 /** 当前播放的 Audio 实例，用于停止朗读 */
@@ -347,12 +386,29 @@ const currentModeLabel = computed(() => CHAT_MODES.find(m => m.id === currentMod
 /**
  * 开始新对话：清空消息列表、输入内容、附件，并中断正在进行的流式请求
  */
-const newChat = () => {
-  messages.value = []
-  storage.remove(CHAT_CACHE_KEY)
+const selectSession = (id) => {
+  activeSessionId.value = id
   userInput.value = ''
   attachedImage.value = null
-  abortController?.abort() // 中断当前流式请求（如有）
+  abortController?.abort()
+}
+
+const createNewSession = () => {
+  const id = crypto?.randomUUID?.() || String(Date.now())
+  sessions.value.unshift({ id, title: '新对话', createdAt: Date.now(), messages: [] })
+  selectSession(id)
+}
+
+/**
+ * 删除当前会话的所有消息（“清空对话”）
+ * 注意：这不会删除会话本身，只清空消息内容。
+ */
+const newChat = () => {
+  if (!activeSession.value) return
+  activeSession.value.messages = []
+  userInput.value = ''
+  attachedImage.value = null
+  abortController?.abort()
 }
 
 /**

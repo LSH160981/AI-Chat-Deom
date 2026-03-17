@@ -128,19 +128,24 @@ textarea { scrollbar-width: none; }
 .sidebar-section { padding: 12px 14px 0; }
 .section-label { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
 .section-value { font-weight: 400; color: var(--text-secondary); text-transform: none; }
-.model-select {
-  width: 100%; padding: 7px 30px 7px 10px;
-  border: 1px solid var(--input-border); border-radius: 7px;
-  font-size: 13px; background: var(--input-bg); color: var(--text);
-  outline: none; cursor: pointer;
-  appearance: none; -webkit-appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 9px center;
+
+/* 会话列表 */
+.session-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; }
+.session-item {
+  width: 100%;
+  text-align: left;
+  border: 1px solid transparent;
+  background: transparent;
+  border-radius: 10px;
+  padding: 8px 10px;
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
 }
-.model-select:focus { border-color: var(--text-secondary); }
-.system-prompt-input { width: 100%; padding: 8px 10px; border: 1px solid var(--input-border); border-radius: 7px; font-size: 13px; font-family: inherit; resize: vertical; background: var(--input-bg); color: var(--text); outline: none; }
-.system-prompt-input:focus { border-color: var(--text-secondary); }
+.session-item:hover { background: var(--hover-bg); color: var(--text); }
+.session-item.active { background: var(--active-bg); color: var(--text); border-color: var(--border); font-weight: 650; }
+.session-title { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 13px; }
+
 .range-input { width: 100%; accent-color: var(--text); }
 .range-labels { display: flex; justify-content: space-between; font-size: 11px; color: var(--text-muted); margin-top: 2px; }
 .toggle-label { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-secondary); cursor: pointer; }
