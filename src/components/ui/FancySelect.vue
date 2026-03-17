@@ -190,13 +190,33 @@ onBeforeUnmount(() => {
 }
 .fs-trigger.disabled { opacity: 0.5; cursor: not-allowed; }
 
-.fs-trigger-inner { display: inline-flex; align-items: center; gap: 8px; min-width: 0; }
-.fs-icon { width: 26px; display: inline-flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+.fs-trigger-inner { display: inline-flex; align-items: center; gap: 8px; min-width: 0; height: 20px; }
+
+/*
+  Emoji（国旗）在不同平台的字形框不一致，容易出现“图标和文字一上一下”。
+  这里用固定高度 + line-height + 轻微下移来做视觉对齐。
+*/
+.fs-icon {
+  width: 26px;
+  height: 20px;
+  line-height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+  font-family: "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",system-ui;
+  transform: translateY(1px);
+}
 .fs-icon.placeholder { opacity: 0; }
 
 .fs-label {
+  height: 20px;
+  display: inline-flex;
+  align-items: center;
   font-size: 13px;
   font-weight: 650;
+  line-height: 20px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -238,6 +258,14 @@ onBeforeUnmount(() => {
   cursor: pointer;
   color: var(--text-secondary);
   text-align: left;
+}
+
+/* 列表里的 icon 同样固定高度，保持与文字基线一致 */
+.fs-item .fs-icon {
+  height: 20px;
+  line-height: 20px;
+  font-size: 18px;
+  transform: translateY(1px);
 }
 
 /* 无 icon 列（无分组且无 icon）时，让文本左对齐，不留空白 */
