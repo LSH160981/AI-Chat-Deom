@@ -11,7 +11,8 @@
  */
 import { reactive, watch } from 'vue'
 
-// TODO: 待 constants/index.js 创建后统一导入
+// 说明：当前项目同时存在 constants/index.js 与 settings 内部 defaults。
+// 这里的默认值与迁移逻辑直接写在 store 内，减少跨文件耦合；如未来要集中管理常量再统一抽离。
 
 /** localStorage 中保存设置所用的键名 */
 const STORAGE_KEY = 'ai-chat-settings'

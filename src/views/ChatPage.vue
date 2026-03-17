@@ -480,9 +480,9 @@ const toggleRecording = async () => {
         // 将转写结果追加到输入框（如果已有内容则加空格分隔）
         userInput.value += (userInput.value ? ' ' : '') + text
       } catch (e) {
-          // TODO: 接入统一 logger
-          if (import.meta.env.DEV) console.error('[ChatPage]', e)
-        }
+        // 转写失败不影响录音流程；开发环境下打印错误便于排查
+        if (import.meta.env.DEV) console.error('[ChatPage][STT]', e)
+      }
     })
   } catch {
     // 麦克风权限被拒绝时弹窗提示
