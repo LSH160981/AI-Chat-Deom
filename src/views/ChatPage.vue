@@ -228,6 +228,45 @@ ensureSessions()
 
 const activeSession = computed(() => sessions.value.find(s => s.id === activeSessionId.value))
 
+/**
+ * 生成会话标题（自动总结）
+ * - 第一次用户发言后生成标题（避免空标题）
+ * - 模型：优先使用当前选择模型；温度固定 0
+ */
+const generateSessionTitle = async () => {
+  if (!activeSession.value) return
+  if (activeSession.value.title && activeSession.value.title !== '新对话') return
+
+  // 取前几条内容拼一段上下文用于总结标题
+  const sample = (activeSession.value.messages || [])
+    .filter(m => m.role === 'user' || m.role === 'assistant')
+    .slice(0, 6)
+    .map(m => `${m.role === 'user' ? '用户' : '助手'}：${m.content}`)
+    .join('\n')
+
+  if (!sample.trim()) return
+
+  const model = selectedModel.value || settings.defaultModel
+  if (!model) return
+
+  let title = ''
+  try {
+    await sendChatMessage({
+      messages: [
+        { role: 'system', content: '你是一个“会话标题生成器”。只输出一个简短标题（不超过12个字或20个英文字符），不要引号，不要句号。' },
+        { role: 'user', content: `为下面对话生成标题：\n${sample}` },
+      ],
+      model,
+      temperature: 0,
+      onChunk: (c) => { title += c },
+    })
+    title = title.trim().replace(/^"|"$/g, '').slice(0, 30)
+    if (title) activeSession.value.title = title
+  } catch {
+    // 标题生成失败不影响主流程
+  }
+}
+
 /** 当前功能模式：chat / txt2img / speech2txt / txt2speech */
 const currentMode = ref(MODE.CHAT)
 
@@ -479,6 +518,12 @@ const sendMessage = async () => {
   // 将用户消息推入消息列表（含可选图片）
   const userMsg = { role: 'user', content: text, image: img }
   messages.value.push(userMsg)
+
+  // 若当前会话还是默认标题，尽早生成一个（不阻塞主对话）
+  if (activeSession.value?.title === '新对话') {
+    generateSessionTitle()
+  }
+
   isLoading.value = true
   chatViewRef.value?.scrollToBottom() // 滚动到最新消息
 
