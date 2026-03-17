@@ -67,7 +67,7 @@
  * @prop {String}  cancelText   - 取消按钮文字，默认使用 i18n 的 common.cancel
  * @prop {Boolean} showCancel   - 是否显示取消按钮，默认 true（alert 场景可设为 false）
  */
-import { nextTick, ref, watch } from 'vue'
+import { nextTick, onBeforeUnmount, ref, watch } from 'vue'
 
 const props = defineProps({
   modelValue: Boolean,
@@ -91,11 +91,26 @@ const props = defineProps({
 
 const confirmBtn = ref(null)
 
+const onEnter = (e) => {
+  if (!props.modelValue) return
+  if (!props.focusConfirm) return
+  if (e.key !== 'Enter') return
+  // 在确认弹窗里：按回车直接确认（即使焦点没有落在按钮上）
+  e.preventDefault()
+  onConfirm()
+}
+
 watch(() => props.modelValue, async (v) => {
   if (!v) return
   if (!props.focusConfirm) return
   await nextTick()
   confirmBtn.value?.focus?.()
+  // 兜底：iOS/Safari 某些情况下 focus 可能失败，因此注册 Enter 键确认
+  window.addEventListener('keydown', onEnter)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('keydown', onEnter)
 })
 
 /**
@@ -112,6 +127,7 @@ const emit = defineEmits(['update:modelValue', 'confirm', 'cancel', 'update:inpu
  * 触发 confirm 事件，并通过 update:modelValue 关闭弹窗
  */
 const onConfirm = () => {
+  window.removeEventListener('keydown', onEnter)
   emit('confirm')
   emit('update:modelValue', false) // 关闭弹窗
 }
@@ -121,6 +137,7 @@ const onConfirm = () => {
  * 触发 cancel 事件，并通过 update:modelValue 关闭弹窗
  */
 const onCancel = () => {
+  window.removeEventListener('keydown', onEnter)
   emit('cancel')
   emit('update:modelValue', false) // 关闭弹窗
 }
