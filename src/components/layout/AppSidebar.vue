@@ -43,54 +43,6 @@
 
     <div class="sidebar-divider"></div>
 
-    <!-- 当前会话：模型选择区域 -->
-    <div class="sidebar-section">
-      <p class="section-label">{{ $t('settings.defaultModel') }}</p>
-      <!--
-        已检测到模型列表时：渲染分组下拉选择框
-        change 事件触发 update:selectedModel 通知父组件更新
-      -->
-      <select
-        v-if="detectedModels.length"
-        :value="selectedModel"
-        @change="$emit('update:selectedModel', $event.target.value)"
-        class="model-select"
-      >
-        <!-- 按 group 分组渲染 optgroup -->
-        <optgroup v-for="[gName, group] in groupedEntries" :key="gName" :label="gName">
-          <option v-for="m in group" :key="m.id" :value="m.id">{{ m.displayName }}</option>
-        </optgroup>
-      </select>
-      <!--
-        未检测到模型时：渲染手动输入框
-        input 事件触发 update:selectedModel 通知父组件更新
-      -->
-      <input
-        v-else
-        :value="selectedModel"
-        @input="$emit('update:selectedModel', $event.target.value)"
-        class="system-prompt-input"
-        placeholder="gpt-4o / claude-sonnet-4-5 …"
-        style="font-family:monospace;font-size:12px;"
-      />
-    </div>
-
-    <!-- 系统提示词编辑区域：仅在聊天模式下显示 -->
-    <div v-if="currentMode === 'chat'" class="sidebar-section">
-      <p class="section-label">{{ $t('settings.systemPrompt') }}</p>
-      <!--
-        textarea 双向绑定系统提示词
-        input 事件触发 update:systemPrompt 通知父组件更新
-      -->
-      <textarea
-        :value="systemPrompt"
-        @input="$emit('update:systemPrompt', $event.target.value)"
-        :placeholder="$t('settings.systemPromptPlaceholder')"
-        class="system-prompt-input"
-        rows="3"
-      ></textarea>
-    </div>
-
     <!-- 底部：跳转设置页面入口 -->
     <div class="sidebar-bottom">
       <!-- RouterLink：点击跳转 /settings 并关闭侧边栏 -->
@@ -104,23 +56,17 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import { CHAT_MODES } from '@/constants/models'
-import { settings } from '@/stores/settings'
 
 /**
  * Props 定义
- * @prop {Boolean} open          - 侧边栏是否展开
- * @prop {String}  currentMode   - 当前功能模式 ID
- * @prop {String}  selectedModel - 当前选中的模型 ID
- * @prop {String}  systemPrompt  - 当前会话的系统提示词
+ * @prop {Boolean} open        - 侧边栏是否展开
+ * @prop {String}  currentMode - 当前功能模式 ID
  */
 defineProps({
   open: Boolean,
   currentMode: String,
-  selectedModel: String,
-  systemPrompt: String,
 })
 
 /**
@@ -128,41 +74,12 @@ defineProps({
  * close                  - 请求关闭侧边栏
  * newChat                - 请求创建新对话
  * update:currentMode     - 更新功能模式（v-model:currentMode）
- * update:selectedModel   - 更新选中模型（v-model:selectedModel）
- * update:systemPrompt    - 更新系统提示词（v-model:systemPrompt）
  */
 defineEmits([
   'close', 'newChat',
   'update:currentMode',
-  'update:selectedModel',
-  'update:systemPrompt',
 ])
 
-/**
- * computed：已检测到的模型列表
- * 从全局 settings.detectedModels 获取，fallback 为空数组
- */
-const detectedModels = computed(() => settings.detectedModels || [])
-
-/**
- * computed：按 group 字段将模型分组
- * 返回结构：{ [groupName]: ModelItem[] }
- * 用于渲染 <optgroup> 分组下拉
- */
-const groupedModels = computed(() => {
-  const map = {}
-  for (const m of detectedModels.value) {
-    if (!map[m.group]) map[m.group] = [] // 首次出现该分组时初始化数组
-    map[m.group].push(m)
-  }
-  return map
-})
-
-/**
- * computed：将 groupedModels 转为 [groupName, models[]] 的数组形式
- * 方便 v-for 遍历渲染 optgroup
- */
-const groupedEntries = computed(() => Object.entries(groupedModels.value))
 </script>
 
 <style>
