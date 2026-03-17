@@ -700,8 +700,8 @@ const clearData = async () => {
 .lang-btn.active { border-color: #60a5fa; color: var(--text); font-weight: 600; background: rgba(96,165,250,0.1); }
 
 /* 固定旗帜区域宽度，让两列按钮的文字起始位置一致（emoji 宽度不同会导致错位） */
-.lang-flag { width: 26px; font-size: 18px; flex-shrink: 0; line-height: 1; display: inline-flex; align-items: center; justify-content: center; }
-.lang-name { font-size: 13px; line-height: 1; display: inline-flex; align-items: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lang-flag { width: 26px; font-size: 18px; flex-shrink: 0; line-height: 1; display: inline-flex; align-items: center; justify-content: center; position: relative; top: 1px; }
+.lang-name { font-size: 14px; line-height: 1; display: inline-flex; align-items: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 .theme-picker { display: flex; gap: 8px; flex-wrap: wrap; }
 .theme-btn { display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 8px 12px; border: 1.5px solid var(--input-border); border-radius: 10px; background: var(--input-bg); font-size: 12px; color: var(--text-secondary); cursor: pointer; transition: all 0.15s; }

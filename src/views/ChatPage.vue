@@ -240,18 +240,66 @@ const stopGenerating = () => {
  */
 const regenerateLast = async () => {
   if (isLoading.value) return
-  // 找到最后一条 user 消息
-  const lastUserIdx = [...messages.value].map(m => m.role).lastIndexOf('user')
+
+  // 找到最后一条 user 消息（重新生成“它”的回答）
+  const roles = messages.value.map(m => m.role)
+  const lastUserIdx = roles.lastIndexOf('user')
   if (lastUserIdx === -1) return
 
-  // 如果最后一条是 assistant，把它移除（避免旧答案残留）
-  if (messages.value[messages.value.length - 1]?.role === 'assistant') {
+  const lastUser = messages.value[lastUserIdx]
+
+  // 移除 user 后面已有的 assistant（旧回答/错误提示/空占位），避免残留
+  while (messages.value.length - 1 > lastUserIdx && messages.value[messages.value.length - 1]?.role === 'assistant') {
     messages.value.pop()
   }
 
-  // 用最后的 user 内容重发
-  userInput.value = messages.value[lastUserIdx].content || ''
-  await sendMessage()
+  const model = selectedModel.value || settings.defaultModel
+  if (!model) {
+    await alert({ icon: '⚙️', title: '未选择模型', message: '请先在设置页检测模型，或手动输入模型 ID', showCancel: false })
+    return
+  }
+  if (!settings.apiBaseUrl) {
+    await alert({ icon: '⚙️', title: '未配置 API', message: '请先在设置页填写 API 地址和密钥', showCancel: false })
+    return
+  }
+
+  isLoading.value = true
+  chatViewRef.value?.scrollToBottom()
+
+  // 构建发送给 API 的历史消息数组（不重复追加 user 气泡）
+  const history = []
+  const sysPrompt = settings.systemPrompt
+  if (sysPrompt) history.push({ role: 'system', content: sysPrompt })
+
+  // 取最后一条 user 之前的上下文
+  const ctxMsgs = messages.value.slice(0, lastUserIdx).slice(-settings.contextLength)
+  for (const m of ctxMsgs) history.push({ role: m.role, content: m.content })
+  history.push({ role: 'user', content: lastUser.content })
+
+  // 追加新的 assistant 占位，流式输出填充
+  messages.value.push({ role: 'assistant', content: '' })
+  abortController = new AbortController()
+
+  try {
+    await sendChatMessage({
+      messages: history,
+      model,
+      temperature: settings.temperature,
+      signal: abortController.signal,
+      onChunk: (chunk) => {
+        messages.value[messages.value.length - 1].content += chunk
+        chatViewRef.value?.scrollToBottom()
+      },
+    })
+  } catch (e) {
+    if (e.name !== 'AbortError') {
+      messages.value[messages.value.length - 1].content = `❌ ${e.message}`
+    }
+  } finally {
+    isLoading.value = false
+    chatViewRef.value?.scrollToBottom()
+    chatViewRef.value?.focusInput()
+  }
 }
 
 // 语音录音 composable，提供 isRecording / startRecording / stopRecording
