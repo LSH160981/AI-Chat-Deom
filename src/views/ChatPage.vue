@@ -145,7 +145,7 @@
  * - 四个功能视图的渲染与状态协调：聊天 / 文生图 / 语音转文字 / 文字转语音
  * - 聊天流式发送、停止、重新回答、上下文拼接等核心业务逻辑
  */
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import AppSidebar from '@/components/layout/AppSidebar.vue'
 import ChatView from '@/components/chat/ChatView.vue'
@@ -158,6 +158,7 @@ import FancySelect from '@/components/ui/FancySelect.vue'
 import { sendChatMessage, generateImage as apiGenerateImage, transcribeAudio, synthesizeSpeech } from '@/api'
 import { CHAT_MODES } from '@/constants/models'
 import { settings } from '@/stores/settings'
+import { storage } from '@/utils/storage'
 
 /**
  * computed：把 settings.detectedModels 按 group 分组，供顶部模型下拉使用
@@ -205,8 +206,15 @@ const sidebarOpen = ref(false)
 /** 当前选中的模型 ID（优先使用，会回退到 settings.defaultModel） */
 const selectedModel = ref(settings.defaultModel || '')
 
-/** 聊天消息列表，每条消息格式：{ role, content, image? } */
-const messages = ref([])
+/**
+ * 聊天消息列表（每条格式：{ role, content, image? }）
+ * 需求：离开对话页去设置页再回来，消息不能丢。
+ * 方案：将 messages 持久化到 localStorage（同域名下）。
+ */
+const CHAT_CACHE_KEY = 'ai-chat-cache.messages'
+// 仅允许缓存 text-based 消息，避免把 base64 图片塞进 localStorage（容量小且会卡）
+const safeCached = (storage.get(CHAT_CACHE_KEY, []) || []).filter(m => m && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string')
+const messages = ref(safeCached)
 
 /** 用户输入框内容（多视图共用同一变量） */
 const userInput = ref('')
@@ -239,6 +247,13 @@ const chatViewRef = ref(null)
 onMounted(() => {
   chatViewRef.value?.focusInput()
 })
+
+// 将对话消息持久化到 localStorage（用于“从设置页返回后不丢对话”）
+watch(messages, (v) => {
+  // 只缓存 role/content，避免存入不可序列化对象
+  const slim = (v || []).map(m => ({ role: m.role, content: m.content }))
+  storage.set(CHAT_CACHE_KEY, slim)
+}, { deep: true })
 
 /** 当前播放的 Audio 实例，用于停止朗读 */
 let currentAudio = null
@@ -334,6 +349,7 @@ const currentModeLabel = computed(() => CHAT_MODES.find(m => m.id === currentMod
  */
 const newChat = () => {
   messages.value = []
+  storage.remove(CHAT_CACHE_KEY)
   userInput.value = ''
   attachedImage.value = null
   abortController?.abort() // 中断当前流式请求（如有）
