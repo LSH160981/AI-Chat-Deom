@@ -38,7 +38,8 @@
               :class="{ selected: it.value === modelValue }"
               @click="choose(it.value)"
             >
-              <span v-if="it.icon" class="fs-icon">{{ it.icon }}</span>
+              <!-- icon slot：即使没有 icon 也保留占位，避免 grid 列错位导致文案被挤压 -->
+              <span class="fs-icon" :class="{ placeholder: !it.icon }">{{ it.icon || '' }}</span>
               <span class="fs-item-label">{{ it.label }}</span>
               <span class="fs-check" aria-hidden="true">{{ it.value === modelValue ? '✓' : '' }}</span>
             </button>
@@ -181,6 +182,7 @@ onBeforeUnmount(() => {
 
 .fs-trigger-inner { display: inline-flex; align-items: center; gap: 8px; min-width: 0; }
 .fs-icon { width: 26px; display: inline-flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+.fs-icon.placeholder { opacity: 0; }
 
 .fs-label {
   font-size: 13px;
@@ -216,7 +218,7 @@ onBeforeUnmount(() => {
 .fs-item {
   width: 100%;
   display: grid;
-  grid-template-columns: 26px 1fr 20px;
+  grid-template-columns: 26px minmax(0, 1fr) 20px;
   align-items: center;
   gap: 8px;
   padding: 9px 10px;
@@ -236,6 +238,7 @@ onBeforeUnmount(() => {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  min-width: 0;
 }
 
 .fs-check { text-align: right; color: #60a5fa; font-weight: 700; }
