@@ -44,6 +44,15 @@
           </button>
 
           <button
+            class="session-edit"
+            type="button"
+            title="重命名"
+            @click.stop="$emit('renameSession', s.id)"
+          >
+            ✎
+          </button>
+
+          <button
             class="session-del"
             type="button"
             title="删除该对话"
@@ -106,6 +115,7 @@ defineEmits([
   'close',
   'newChat',
   'selectSession',
+  'renameSession',
   'deleteSession',
   'update:currentMode',
 ])

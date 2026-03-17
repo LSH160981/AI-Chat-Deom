@@ -24,6 +24,7 @@
       :sessions="sessions"
       :activeSessionId="activeSessionId"
       @selectSession="selectSession"
+      @renameSession="renameSession"
       @deleteSession="deleteSession"
       @close="sidebarOpen = false"
       @newChat="createNewSession"
@@ -197,7 +198,7 @@ const MODE = {
 // 国际化翻译函数
 const { t } = useI18n()
 // 全局模态弹窗（alert/confirm）
-const { alert } = useModal()
+const { alert, confirm } = useModal()
 
 // ===== 会话状态 =====
 
@@ -443,8 +444,27 @@ const createNewSession = () => {
  * 删除会话
  * - 删除当前会话时：自动切换到下一个会话；若没有会话则新建一个空会话
  */
-const deleteSession = (id) => {
-  const idx = sessions.value.findIndex(s => s.id === id)
+const renameSession = async (id) => {
+  const s = sessions.value.find(x => x.id === id)
+  if (!s) return
+
+  const name = window.prompt('重命名对话：', s.title || '')
+  if (!name) return
+  s.title = name.trim().slice(0, 30) || s.title
+}
+
+const deleteSession = async (id) => {
+  const s = sessions.value.find(x => x.id === id)
+  if (!s) return
+
+  const ok = await confirm({
+    icon: '🗑',
+    title: '删除对话',
+    message: `确定删除「${s.title || '新对话'}」吗？此操作不可恢复。`,
+  })
+  if (!ok) return
+
+  const idx = sessions.value.findIndex(x => x.id === id)
   if (idx === -1) return
   sessions.value.splice(idx, 1)
 
