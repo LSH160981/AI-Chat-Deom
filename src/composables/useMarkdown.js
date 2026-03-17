@@ -118,21 +118,57 @@ export function useMarkdown() {
   const renderContent = (content) => {
     if (!content) return '' // 空内容直接返回，避免无效处理
     try {
-      // 第一步：处理块级数学公式 $$...$$（跨行公式，如矩阵、方程组）
-      content = content.replace(/\$\$([^$]+)\$\$/g, (_, tex) => {
-        try {
-          return katex.renderToString(tex, { throwOnError: false, displayMode: true }) // displayMode: 独立行显示
-        } catch { return _ } // KaTeX 解析失败时保留原始公式文本
+      /**
+       * 数学公式渲染策略（重要）：
+       * - 仅支持标准 KaTeX 语法：
+       *   行内：$ ... $
+       *   块级：$$ ... $$
+       * - 不支持用户输入的 "\( ... \)" 和 "\[ ... \]"（这是 LaTeX 的另一种定界符）
+       *
+       * 你反馈的内容里大量出现 "( \frac{0}{0} )" / "[ \lim ... ]"：
+       * 这是模型把公式用括号/方括号包起来了，但并没有用 $ 或 $$ 定界，
+       * 所以前端不会当作数学公式去渲染。
+       *
+       * 这里做一个“温和修复”：
+       * - 把形如 "( \frac{...} )" 自动转为 "$\\frac{...}$"
+       * - 把形如 "[ \lim ... ]" 自动转为 "$$\\lim ...$$"
+       *
+       * 这样能兼容你截图里的典型输出，同时避免误伤普通括号文本。
+       */
+
+      // 0) 先把 \( ... \) / \[ ... \] 转为 $...$ / $$...$$（更通用）
+      content = content
+        .replace(/\\\(([^\n]+?)\\\)/g, (_, tex) => `$${tex}$`)
+        .replace(/\\\[([\s\S]+?)\\\]/g, (_, tex) => `$$${tex}$$`)
+
+      // 1) 兼容：( \frac{...} ) 这类“括号包裹 LaTeX” → 行内公式
+      content = content.replace(/\(\s*(\\[a-zA-Z]+[\s\S]*?)\s*\)/g, (m, tex) => {
+        // 避免把普通括号误判：只处理以反斜杠命令开头的情况
+        if (!tex.startsWith('\\')) return m
+        return `$${tex}$`
       })
 
-      // 第二步：处理行内数学公式 $...$（单行公式，如变量、简单表达式）
-      content = content.replace(/\$([^$\n]+)\$/g, (_, tex) => {
-        try {
-          return katex.renderToString(tex, { throwOnError: false }) // 默认为行内模式
-        } catch { return _ } // KaTeX 解析失败时保留原始公式文本
+      // 2) 兼容：[ \lim ... ] 这类“方括号包裹 LaTeX” → 块级公式
+      content = content.replace(/\[\s*(\\[a-zA-Z]+[\s\S]*?)\s*\]/g, (m, tex) => {
+        if (!tex.startsWith('\\')) return m
+        return `$$${tex}$$`
       })
 
-      // 第三步：将处理过公式的文本交给 markdown-it 渲染其余 Markdown 语法
+      // 3) 处理块级数学公式 $$...$$（跨行公式，如矩阵、方程组）
+      content = content.replace(/\$\$([\s\S]+?)\$\$/g, (_, tex) => {
+        try {
+          return katex.renderToString(tex, { throwOnError: false, displayMode: true })
+        } catch { return `$$${tex}$$` }
+      })
+
+      // 4) 处理行内数学公式 $...$（单行公式，如变量、简单表达式）
+      content = content.replace(/\$([^$\n]+?)\$/g, (_, tex) => {
+        try {
+          return katex.renderToString(tex, { throwOnError: false })
+        } catch { return `$${tex}$` }
+      })
+
+      // 5) 交给 markdown-it 渲染其余 Markdown 语法
       return md.render(content)
     } catch {
       return content // markdown-it 渲染异常时降级返回原始文本，避免页面白屏
