@@ -152,6 +152,7 @@
  */
 import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useRoute, useRouter } from 'vue-router'
 import AppSidebar from '@/components/layout/AppSidebar.vue'
 import ChatView from '@/components/chat/ChatView.vue'
 import ImageGenView from '@/components/chat/ImageGenView.vue'
@@ -202,10 +203,18 @@ const { alert, confirm, prompt } = useModal()
 
 // ===== 会话状态 =====
 
+const route = useRoute()
+const router = useRouter()
+
 /**
  * 多会话（ChatGPT 风格）
  * - sessions: 会话列表（含 title + messages）
  * - activeSessionId: 当前激活会话
+ *
+ * URL 联动：
+ * - 聊天页地址：/#/<sessionId>
+ * - 切换会话时同步更新 hash
+ * - 直接打开带 sessionId 的 URL 时自动切换到该会话
  *
  * 缓存策略：localStorage 持久化
  */
@@ -216,13 +225,30 @@ const activeSessionId = ref(storage.get('ai-chat-cache.activeSessionId', ''))
 
 const ensureSessions = () => {
   if (!Array.isArray(sessions.value)) sessions.value = []
+
+  // 1) 优先使用 URL 里的 sessionId（/#/<sessionId>）
+  const routeSid = typeof route.params.sessionId === 'string' ? route.params.sessionId : ''
+
+  // 2) 没有会话则创建一个
   if (!sessions.value.length) {
-    const id = crypto?.randomUUID?.() || String(Date.now())
+    const id = routeSid || crypto?.randomUUID?.() || String(Date.now())
     sessions.value.push({ id, title: '新对话', createdAt: Date.now(), messages: [] })
     activeSessionId.value = id
   }
+
+  // 3) 若 URL 指定的会话不存在，则创建该会话（便于分享链接/深链）
+  if (routeSid && !sessions.value.some(s => s.id === routeSid)) {
+    sessions.value.unshift({ id: routeSid, title: '新对话', createdAt: Date.now(), messages: [] })
+  }
+
+  // 4) activeSessionId 合法性兜底
   if (!activeSessionId.value || !sessions.value.some(s => s.id === activeSessionId.value)) {
-    activeSessionId.value = sessions.value[0].id
+    activeSessionId.value = routeSid || sessions.value[0].id
+  }
+
+  // 5) 若 URL 和当前会话不一致，主动同步 URL
+  if ((routeSid || '') !== (activeSessionId.value || '')) {
+    router.replace({ name: 'chat', params: { sessionId: activeSessionId.value } })
   }
 }
 ensureSessions()
@@ -344,6 +370,17 @@ watch(sessions, (v) => {
   storage.set('ai-chat-cache.activeSessionId', activeSessionId.value)
 }, { deep: true })
 
+// 监听 URL 变化：用户手动改地址 / 通过分享链接进入时，自动切换会话
+watch(() => route.params.sessionId, (sid) => {
+  if (typeof sid !== 'string' || !sid) return
+  if (sid === activeSessionId.value) return
+  // 若不存在则创建
+  if (!sessions.value.some(s => s.id === sid)) {
+    sessions.value.unshift({ id: sid, title: '新对话', createdAt: Date.now(), messages: [] })
+  }
+  selectSession(sid)
+})
+
 /** 当前播放的 Audio 实例，用于停止朗读 */
 let currentAudio = null
 
@@ -438,6 +475,12 @@ const currentModeLabel = computed(() => CHAT_MODES.find(m => m.id === currentMod
  */
 const selectSession = async (id) => {
   activeSessionId.value = id
+
+  // 会话 ↔ URL 联动：切换会话时同步更新地址（/#/<sessionId>）
+  if (route.params.sessionId !== id) {
+    router.replace({ name: 'chat', params: { sessionId: id } })
+  }
+
   userInput.value = ''
   attachedImage.value = null
   abortController?.abort()

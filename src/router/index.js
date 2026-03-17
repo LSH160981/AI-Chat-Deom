@@ -15,9 +15,10 @@ const router = createRouter({
   history: createWebHashHistory(import.meta.env.BASE_URL),
   routes: [
     {
-      path: '/',
+      path: '/:sessionId?',
       name: 'chat',
       component: ChatPage,
+      props: true,
     },
     {
       path: '/settings',
